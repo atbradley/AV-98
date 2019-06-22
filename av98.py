@@ -10,6 +10,7 @@
 
 import argparse
 import cmd
+import cgi
 import codecs
 import collections
 import fnmatch
@@ -26,13 +27,6 @@ import tempfile
 import urllib.parse
 import ssl
 import time
-
-# Use chardet if it's there, but don't depend on it
-try:
-    import chardet
-    _HAS_CHARDET = True
-except ImportError:
-    _HAS_CHARDET = False
 
 # Command abbreviations
 _ABBREVS = {
@@ -237,13 +231,13 @@ class GeminiClient(cmd.Cmd):
             self._debug("Response header: %s." % header)
             body = f.read()
             status, mime = header.split("\t")
-
-#            except UnicodeError:
-#                print("""ERROR: Unknown text encoding!
-#If you know the correct encoding, use e.g. 'set encoding koi8-r' and
-#try again.  Otherwise, install the 'chardet' library for Python 3 to
-#enable automatic encoding detection.""")
-#                return
+            mime, mime_options = cgi.parse_header(mime)
+            if "charset" in mime_options:
+                try:
+                    codecs.lookup(mime_options["charset"])
+                except LookupError:
+                    print("Header declared unknown encoding %s" % value)
+                    return
 
         # Catch network errors which may be recoverable if a redundant
         # mirror is specified
@@ -294,8 +288,12 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         ## Set file mode
         if mime.startswith("text/"):
             mode = "w"
-            encoding = "UTF-8"
-            body = body.decode(encoding)
+            encoding = mime_options.get("charset", "UTF-8")
+            try:
+                body = body.decode(encoding)
+            except UnicodeError:
+                print("Could not decode response body using %s encoding declared in header!" % encoding)
+                return
         else:
             mode = "wb"
             encoding = None
@@ -389,42 +387,6 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             cmd_str = "xdg-open %s"
         self._debug("Using handler: %s" % cmd_str)
         return cmd_str
-
-    def _decode_text(self, f):
-        # Attempt to decode some bytes into a Unicode string.
-        # First of all, try UTF-8 as the default.
-        # If this fails, attempt to autodetect the encoding if chardet
-        # library is installed.
-        # If chardet is not installed, or fails to work, fall back on
-        # the user-specified alternate encoding.
-        # If none of this works, this will raise UnicodeError and it's
-        # up to the caller to handle it gracefully.
-        raw_bytes = f.read()
-        # Try UTF-8 first:
-        try:
-            text = raw_bytes.decode("UTF-8")
-        except UnicodeError:
-            # If we have chardet, try the magic
-            self._debug("Could not decode response as UTF-8.")
-            if _HAS_CHARDET:
-                autodetect = chardet.detect(raw_bytes)
-                # Make sure we're vaguely certain
-                if autodetect["confidence"] > 0.5:
-                    self._debug("Trying encoding %s as recommended by chardet." % autodetect["encoding"])
-                    text = raw_bytes.decode(autodetect["encoding"])
-                else:
-                    # Try the user-specified encoding
-                    self._debug("Trying fallback encoding %s." % self.options["encoding"])
-                    text = raw_bytes.decode(self.options["encoding"])
-            else:
-                # Try the user-specified encoding
-                text = raw_bytes.decode(self.options["encoding"])
-        if not text.endswith("\n"):
-            text += CRLF
-        new_f = io.StringIO()
-        new_f.write(text)
-        new_f.seek(0)
-        return new_f
 
     def _handle_index(self, body, menu_gi):
         self.index = []
