@@ -276,6 +276,17 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             print("ERROR: " + str(err))
             return
 
+        # Handle redirects
+        # (Temporarily accepting unofficial conman status codes)
+        if status in ("3", "301"):
+            self._debug("Following redirect to %s." % mime)
+            new_gi = GeminiItem(gi.host, gi.port, mime, None)
+            self._go_to_gi(new_gi)
+            return
+        elif status in ("4", "404"):
+            print("Path %s does not exist at %s:%d" % (gi.path, gi.host, gi.port))
+            return
+
         # Save the result in a temporary file
         ## Delete old file
         if self.tmp_filename:
