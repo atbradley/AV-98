@@ -317,6 +317,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
 
         # Update state
         self.gi = gi
+        self.mime = mime
         self._log_visit(gi, address, size)
         if update_hist:
             self._update_history(gi)
@@ -475,7 +476,10 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             self.log["ipv6_bytes_recvd"] += size
 
     def _get_active_tmpfile(self):
-        return self.tmp_filename
+        if self.mime == "text/gemini":
+            return self.idx_filename
+        else:
+            return self.tmp_filename
 
     def _debug(self, debug_text):
         if not self.options["debug"]:
@@ -736,14 +740,14 @@ Use 'ls -l' to see URLs."""
     @needs_gi
     def do_less(self, *args):
         """Run most recently visited item through "less" command."""
-        cmd_str = self._get_handler_cmd(self.gi)
+        cmd_str = self._get_handler_cmd(self.mime)
         cmd_str = cmd_str % self._get_active_tmpfile()
         subprocess.call("%s | less -R" % cmd_str, shell=True)
 
     @needs_gi
     def do_fold(self, *args):
         """Run most recently visited item through "fold" command."""
-        cmd_str = self._get_handler_cmd(self.gi)
+        cmd_str = self._get_handler_cmd(self.mime)
         cmd_str = cmd_str % self._get_active_tmpfile()
         subprocess.call("%s | fold -w 70 -s" % cmd_str, shell=True)
 
