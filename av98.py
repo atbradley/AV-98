@@ -51,7 +51,6 @@ _ABBREVS = {
     "/":    "search",
     "t":    "tour",
     "u":    "up",
-    "v":    "veronica",
 }
 
 _MIME_HANDLERS = {
@@ -155,7 +154,7 @@ def geminiitem_to_line(gi, name=""):
 
 # Cheap and cheerful URL detector
 def looks_like_url(word):
-    return "." in word and word.startswith(("gemini://", "geminis://"))
+    return "." in word and word.startswith("gemini://")
 
 # Decorators
 def needs_gi(inner):
@@ -190,7 +189,6 @@ class GeminiClient(cmd.Cmd):
         self.options = {
             "color_menus" : False,
             "debug" : False,
-            "encoding" : "iso-8859-1",
             "ipv6" : False,
             "timeout" : 10,
         }
@@ -536,12 +534,6 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             if option not in self.options:
                 print("Unrecognised option %s" % option)
                 return
-            elif option == "encoding":
-                try:
-                    codecs.lookup(value)
-                except LookupError:
-                    print("Unknown encoding %s" % value)
-                    return
             elif value.isnumeric():
                 value = int(value)
             elif value.lower() == "false":
