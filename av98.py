@@ -228,14 +228,6 @@ class GeminiClient(cmd.Cmd):
             header = header.decode("UTF-8").strip()
             self._debug("Response header: %s." % header)
             body = f.read()
-            status, mime = header.split("\t")
-            mime, mime_options = cgi.parse_header(mime)
-            if "charset" in mime_options:
-                try:
-                    codecs.lookup(mime_options["charset"])
-                except LookupError:
-                    print("Header declared unknown encoding %s" % value)
-                    return
 
         # Catch network errors which may be recoverable if a redundant
         # mirror is specified
@@ -268,16 +260,33 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             print("ERROR: " + str(err))
             return
 
+        # Look at what we got
+        status, mime = header.split("\t")
+        # Handle different statuses.
+        # Everything other than 200 should return here
+        if status in ("2", "200"):
+            if mime == "":
+                mime = "text/gemini; charset=utf-8"
+            mime, mime_options = cgi.parse_header(mime)
+            if "charset" in mime_options:
+                try:
+                    codecs.lookup(mime_options["charset"])
+                except LookupError:
+                    print("Header declared unknown encoding %s" % value)
+                    return
         # Handle redirects
         # (Temporarily accepting unofficial conman status codes)
-        if status in ("3", "301"):
+        elif status in ("3", "301"):
             self._debug("Following redirect to %s." % mime)
             new_gi = GeminiItem(gi.host, gi.port, mime, None)
             self._go_to_gi(new_gi)
             return
+        # Not found
         elif status in ("4", "404"):
             print("Path %s does not exist at %s:%d" % (gi.path, gi.host, gi.port))
             return
+
+        # If we're still here, this is a 200
 
         # Save the result in a temporary file
         ## Delete old file
@@ -295,7 +304,6 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         else:
             mode = "wb"
             encoding = None
-
         ## Write
         tmpf = tempfile.NamedTemporaryFile(mode, encoding=encoding, delete=False)
         size = tmpf.write(body)
