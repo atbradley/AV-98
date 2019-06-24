@@ -138,9 +138,7 @@ def geminiitem_to_url(gi):
         return ""
 
 def geminiitem_from_line(line, menu_gi):
-    # Split on tabs.  Strip final element after splitting,
-    # since if we split first we loose empty elements.
-    bits = line.strip().split("\t")
+    bits = line.strip()[1:-1].split("|")
     name, link = bits
     if "://" in link:
         return url_to_geminiitem(link, name)
@@ -150,7 +148,7 @@ def geminiitem_from_line(line, menu_gi):
 def geminiitem_to_line(gi, name=""):
     name = ((name or gi.name) or geminiitem_to_url(gi))
     path = gi.path
-    return "\t".join((name, path, gi.host or "", str(gi.port))) + "\n"
+    return "[%s|%s]" % (name, geminiitem_to_url(gi))
 
 # Cheap and cheerful URL detector
 def looks_like_url(word):
@@ -402,7 +400,8 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         tmpf = tempfile.NamedTemporaryFile("w", encoding="UTF-8", delete=False)
         self.idx_filename = tmpf.name
         for line in body.splitlines():
-            if line.startswith("\t"):
+            line = line.strip()
+            if line and line[0] == "[" and line[-1] == "]" and line.count("|") == 1:
                 try:
                     gi = geminiitem_from_line(line, menu_gi)
                     self.index.append(gi)
