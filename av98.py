@@ -264,8 +264,8 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         # Look at what we got
         status, mime = header.split("\t")
         # Handle different statuses.
-        # Everything other than 200 should return here
-        if status in ("2", "200"):
+        # Everything other than success
+        if status.startswith("2"):
             if mime == "":
                 mime = "text/gemini; charset=utf-8"
             mime, mime_options = cgi.parse_header(mime)
@@ -276,18 +276,17 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                     print("Header declared unknown encoding %s" % value)
                     return
         # Handle redirects
-        # (Temporarily accepting unofficial conman status codes)
-        elif status in ("3", "301"):
+        elif status.startswith("3"):
             self._debug("Following redirect to %s." % mime)
             new_gi = GeminiItem(gi.host, gi.port, mime, None)
             self._go_to_gi(new_gi)
             return
         # Not found
-        elif status in ("4", "404"):
-            print("Path %s does not exist at %s:%d" % (gi.path, gi.host, gi.port))
+        elif status.startswith("4") or status.startswith("5"):
+            print("Error: %s" % mime)
             return
 
-        # If we're still here, this is a 200
+        # If we're still here, this is a success and there's a response body
 
         # Save the result in a temporary file
         ## Delete old file
@@ -863,7 +862,7 @@ Bookmarks are stored in the ~/.av98-bookmarks.txt file."""
             print("You need to 'add' some bookmarks, first")
         else:
             gi = GeminiItem(None, None, os.path.expanduser(file_name),
-                            "1", file_name)
+                            file_name)
             self._go_to_gi(gi)
 
     ### Help
