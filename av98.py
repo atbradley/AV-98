@@ -282,9 +282,13 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             new_gi = GeminiItem(gi.host, gi.port, mime, None)
             self._go_to_gi(new_gi)
             return
-        # Not found
+        # Error
         elif status.startswith("4") or status.startswith("5"):
             print("Error: %s" % mime)
+            return
+        # Client cert
+        elif status.startswith("6"):
+            print("Client certificates not supported.")
             return
 
         # If we're still here, this is a success and there's a response body
