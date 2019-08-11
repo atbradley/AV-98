@@ -373,8 +373,9 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             # knowledge of earlier failures.
             raise err
         # Send request and wrap response in a file descriptor
-        self._debug("Sending %s<CRLF>" % gi.path)
-        s.sendall((gi.path + CRLF).encode("UTF-8"))
+        url = geminiitem_to_url(gi)
+        self._debug("Sending %s<CRLF>" % url)
+        s.sendall((url + CRLF).encode("UTF-8"))
         return address, s.makefile(mode = "rb")
 
     def _get_handler_cmd(self, mimetype):
