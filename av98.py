@@ -130,9 +130,11 @@ def fix_ipv6_url(url):
 
 def geminiitem_to_url(gi):
     if gi and gi.host:
-        return ("gemini://%s:%d%s%s" % (
-            gi.host, int(gi.port), "" if gi.path.startswith("/") else "/",
-            gi.path))
+        return ("gemini://%s%s%s" % (
+            gi.host,
+            "" if gi.port == 1965 else ":%d" % gi.port,
+            gi.path if gi.path.startswith("/") else "/"+gi.path,
+            ))
     elif gi:
         return gi.path
     else:
