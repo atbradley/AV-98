@@ -89,7 +89,7 @@ _ITEMTYPE_COLORS = {
 
 CRLF = '\r\n'
 
-_GOPHER_PROXY_HOST = "gemini.conman.org"
+_GOPHER_PROXY_HOST = "localhost"
 _GOPHER_PROXY_PORT = 1965
 
 # Lightweight representation of an item in Geminispace
