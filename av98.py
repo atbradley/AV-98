@@ -658,7 +658,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
     @needs_gi
     def do_root(self, *args):
         """Go to root selector of the server hosting current item."""
-        gi = GeminiItem(self.gi.host, self.gi.port, "",
+        gi = GeminiItem(self.gi.scheme, self.gi.host, self.gi.port, "",
                         "Root of %s" % self.gi.host)
         self._go_to_gi(gi)
 
