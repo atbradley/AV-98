@@ -419,7 +419,6 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         tmpf = tempfile.NamedTemporaryFile("w", encoding="UTF-8", delete=False)
         self.idx_filename = tmpf.name
         for line in body.splitlines():
-            line = line.strip()
             if line.startswith("=>"):
                 try:
                     gi = geminiitem_from_line(line, menu_gi)
