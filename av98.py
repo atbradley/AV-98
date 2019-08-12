@@ -269,7 +269,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             return
 
         # Look at what we got
-        status, mime = header.split("\t")
+        status, mime = header.split(maxsplit=1)
         # Handle different statuses.
         # Everything other than success
         if status.startswith("2"):
