@@ -89,9 +89,12 @@ _ITEMTYPE_COLORS = {
 
 CRLF = '\r\n'
 
+_GOPHER_PROXY_HOST = "gemini.conman.org"
+_GOPHER_PROXY_PORT = 1965
+
 # Lightweight representation of an item in Geminispace
 GeminiItem = collections.namedtuple("GeminiItem",
-        ("host", "port", "path", "name"))
+        ("scheme", "host", "port", "path", "name"))
 
 def url_to_geminiitem(url, name=None):
     # urllibparse.urlparse can handle IPv6 addresses, but only if they
@@ -106,7 +109,7 @@ def url_to_geminiitem(url, name=None):
     u = urllib.parse.urlparse(url)
     # https://tools.ietf.org/html/rfc4266#section-2.1
     path = u.path
-    return GeminiItem(u.hostname, u.port or 1965, path, name)
+    return GeminiItem(u.scheme, u.hostname, u.port or 1965, path, name)
 
 def fix_ipv6_url(url):
     # If there's a pair of []s in there, it's probably fine as is.
@@ -130,7 +133,8 @@ def fix_ipv6_url(url):
 
 def geminiitem_to_url(gi):
     if gi and gi.host:
-        return ("gemini://%s%s%s" % (
+        return ("%s://%s%s%s" % (
+            gi.scheme,
             gi.host,
             "" if gi.port == 1965 else ":%d" % gi.port,
             gi.path if gi.path.startswith("/") else "/"+gi.path,
@@ -149,7 +153,7 @@ def geminiitem_from_line(line, menu_gi):
     if "://" in link:
         return url_to_geminiitem(link, name)
     else:
-        return GeminiItem(menu_gi.host, menu_gi.port, link, name)
+        return GeminiItem("gemini", menu_gi.host, menu_gi.port, link, name)
 
 def geminiitem_to_line(gi, name=""):
     name = ((name or gi.name) or geminiitem_to_url(gi))
@@ -340,24 +344,10 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
     def _send_request(self, gi):
         """Send a selector to a given host and port.
         Returns the resolved address and binary file with the reply."""
-        # DNS lookup - will get IPv4 and IPv6 records if IPv6 is enabled
-        if ":" in gi.host:
-            # This is likely a literal IPv6 address, so we can *only* ask for
-            # IPv6 addresses or getaddrinfo will complain
-            family_mask = socket.AF_INET6
-        elif socket.has_ipv6 and self.options["ipv6"]:
-            # Accept either IPv4 or IPv6 addresses
-            family_mask = 0
-        else:
-            # IPv4 only
-            family_mask = socket.AF_INET
-        addresses = socket.getaddrinfo(gi.host, gi.port, family=family_mask,
-                type=socket.SOCK_STREAM)
-        # Sort addresses so IPv6 ones come first
-        addresses.sort(key=lambda add: add[0] == socket.AF_INET6, reverse=True)
-        # Verify that this sort works
-        if any(add[0] == socket.AF_INET6 for add in addresses):
-            assert addresses[0][0] == socket.AF_INET6
+        if gi.scheme == "gemini":
+            addresses = self._get_addresses(gi.host, gi.port)
+        elif gi.scheme == "gopher":
+            addresses = self._get_addresses(_GOPHER_PROXY_HOST, _GOPHER_PROXY_PORT)
         # Connect to remote host by any address possible
         err = None
         for address in addresses:
@@ -383,6 +373,25 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         self._debug("Sending %s<CRLF>" % url)
         s.sendall((url + CRLF).encode("UTF-8"))
         return address, s.makefile(mode = "rb")
+
+    def _get_addresses(self, host, port):
+        # DNS lookup - will get IPv4 and IPv6 records if IPv6 is enabled
+        if ":" in host:
+            # This is likely a literal IPv6 address, so we can *only* ask for
+            # IPv6 addresses or getaddrinfo will complain
+            family_mask = socket.AF_INET6
+        elif socket.has_ipv6 and self.options["ipv6"]:
+            # Accept either IPv4 or IPv6 addresses
+            family_mask = 0
+        else:
+            # IPv4 only
+            family_mask = socket.AF_INET
+        addresses = socket.getaddrinfo(host, port, family=family_mask,
+                type=socket.SOCK_STREAM)
+        # Sort addresses so IPv6 ones come first
+        addresses.sort(key=lambda add: add[0] == socket.AF_INET6, reverse=True)
+
+        return addresses
 
     def _get_handler_cmd(self, mimetype):
         # Now look for a handler for this mimetype
