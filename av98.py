@@ -152,7 +152,6 @@ class GeminiItem():
 
     @classmethod
     def from_map_line(cls, line, origin_gi):
-        print(line)
         assert line.startswith("=>")
         assert line[2:].strip()
         bits = line[2:].strip().split(maxsplit=1)
