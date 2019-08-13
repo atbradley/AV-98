@@ -74,19 +74,6 @@ _ANSI_COLORS = {
     "black":    "\x1b[0;30m",
 }
 
-_ITEMTYPE_COLORS = {
-    "0":        _ANSI_COLORS["green"],    # Text File
-    "1":        _ANSI_COLORS["blue"],     # Sub-menu
-    "7":        _ANSI_COLORS["red"],      # Search / Input
-    "8":        _ANSI_COLORS["purple"],   # Telnet
-    "9":        _ANSI_COLORS["cyan"],     # Binary
-    "g":        _ANSI_COLORS["blue"],     # Gif
-    "h":        _ANSI_COLORS["green"],    # HTML
-    "s":        _ANSI_COLORS["cyan"],     # Sound
-    "I":        _ANSI_COLORS["cyan"],     # Gif
-    "T":        _ANSI_COLORS["purple"],   # Telnet
-}
-
 CRLF = '\r\n'
 
 # Lightweight representation of an item in Geminispace
