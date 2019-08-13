@@ -228,28 +228,23 @@ class GeminiClient(cmd.Cmd):
             self._debug("Response header: %s." % header)
 
         # Catch network errors which may happen on initial connection
-        except (socket.gaierror, ConnectionRefusedError,
-                ConnectionResetError, TimeoutError, socket.timeout,
-                ) as network_error:
+        except Exception as err:
             # Print an error message
-            if isinstance(network_error, socket.gaierror):
+            if isinstance(err, socket.gaierror):
                 self.log["dns_failures"] += 1
                 print("ERROR: DNS error!")
-            elif isinstance(network_error, ConnectionRefusedError):
+            elif isinstance(err, ConnectionRefusedError):
                 self.log["refused_connections"] += 1
                 print("ERROR: Connection refused!")
-            elif isinstance(network_error, ConnectionResetError):
+            elif isinstance(err, ConnectionResetError):
                 self.log["reset_connections"] += 1
                 print("ERROR: Connection reset!")
-            elif isinstance(network_error, (TimeoutError, socket.timeout)):
+            elif isinstance(err, (TimeoutError, socket.timeout)):
                 self.log["timeouts"] += 1
                 print("""ERROR: Connection timed out!
 Slow internet connection?  Use 'set timeout' to be more patient.""")
-            return
-
-        # Catch other errors
-        except Exception as err:
-            print("ERROR: " + str(err))
+            else:
+                print("ERROR: " + str(err))
             return
 
         # Validate header
