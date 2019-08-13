@@ -366,6 +366,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             s = context.wrap_socket(s, server_hostname = gi.host)
             try:
                 s.connect(address[4])
+                self._debug("Established {} connection.".format(s.version()))
                 break
             except OSError as e:
                 err = e
