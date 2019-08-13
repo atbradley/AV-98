@@ -106,10 +106,7 @@ class GeminiItem():
         self.path = parsed.path
 
     def root_url(self):
-        return urllib.parse.urlunparse((self.scheme,
-            # Don't include redundant ports in the netloc
-            self.host if self.port == standard_ports[self.scheme] else self.host + ":" + str(self.port),
-            "/", "", "", ""))
+        return self._derive_url("/")
 
     def up_url(self):
         pathbits = list(os.path.split(self.path))
@@ -122,15 +119,19 @@ class GeminiItem():
         # Get rid of bottom component
         pathbits.pop()
         new_path = os.path.join(*pathbits)
-        return urllib.parse.urlunparse((self.scheme,
-            self.host if self.port == standard_ports[self.scheme] else self.host + ":" + str(self.port),
-            new_path, "", "", ""))
+        return self._derive_url(new_path)
 
     def add_query(self, query):
-        new_url = urllib.parse.urlunparse((self.scheme,
+        return GeminiItem(self._derive_url(query=query))
+
+    def _derive_url(self, path="", query=""):
+        """
+        A thin wrapper around urlunparse which avoids inserting standard ports
+        into URLs just to keep things clean.
+        """
+        return = urllib.parse.urlunparse((self.scheme,
             self.host if self.port == standard_ports[self.scheme] else self.host + ":" + str(self.port),
-            self.path, "", query, ""))
-        return GeminiItem(new_url)
+            path or self.path, "", query, ""))
 
     def absolutise_url(self, relative_url):
         """
