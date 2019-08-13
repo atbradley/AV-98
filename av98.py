@@ -172,7 +172,6 @@ class GeminiClient(cmd.Cmd):
         self.index_index = -1
         self.lookup = self.index
         self.marks = {}
-        self.mirrors = {}
         self.page_index = 0
         self.tmp_filename = ""
         self.visited_hosts = set()
@@ -237,11 +236,6 @@ class GeminiClient(cmd.Cmd):
                 self.log["timeouts"] += 1
                 print("""ERROR: Connection timed out!
 Slow internet connection?  Use 'set timeout' to be more patient.""")
-            # Try to fall back on a redundant mirror
-            new_gi = self._get_mirror_gi(gi)
-            if new_gi:
-                print("Trying redundant mirror %s..." % geminiitem_to_url(new_gi))
-                self._go_to_gi(new_gi)
             return
 
         # Catch other errors
@@ -448,31 +442,6 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         if gi.name and url:
             line += " (%s)" % geminiitem_to_url(gi)
         return line
-
-    def _register_redundant_server(self, gi):
-        # This mirrors the last non-mirror item
-        target = self.index[-1]
-        target = (target.host, target.port, target.path)
-        if target not in self.mirrors:
-            self.mirrors[target] = []
-        self.mirrors[target].append((gi.host, gi.port, gi.path))
-        self._debug("Registered redundant mirror %s" % geminiitemi_to_url(gi))
-
-    def _get_mirror_gi(self, gi):
-        # Search for a redundant mirror that matches this GI
-        for (host, port, path_prefix), mirrors in self.mirrors.items():
-            if (host == gi.host and port == gi.port and
-                gi.path.startswith(path_prefix)):
-                break
-        else:
-        # If there are no mirrors, we're done
-            return None
-        # Pick a mirror at random and build a new GI for it
-        mirror_host, mirror_port, mirror_path = random.sample(mirrors, 1)[0]
-        new_gi = GeminiItem(mirror_host, mirror_port,
-                mirror_path + "/" + gi.path[len(path_prefix):],
-                gi.name)
-        return new_gi
 
     def _show_lookup(self, offset=0, end=None, url=False):
         for n, gi in enumerate(self.lookup[offset:end]):
