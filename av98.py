@@ -214,16 +214,12 @@ class GeminiClient(cmd.Cmd):
                 address, f = None, open(gi.path, "rb")
             else:
                 address, f = self._send_request(gi)
-            # Attempt to decode something that is supposed to be text
-            # (which involves reading the entire file over the network
-            # first)
+            # Read response header
             header = f.readline()
             header = header.decode("UTF-8").strip()
             self._debug("Response header: %s." % header)
-            body = f.read()
 
-        # Catch network errors which may be recoverable if a redundant
-        # mirror is specified
+        # Catch network errors which may happen on initial connection
         except (socket.gaierror, ConnectionRefusedError,
                 ConnectionResetError, TimeoutError, socket.timeout,
                 ) as network_error:
@@ -248,32 +244,29 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                 self._go_to_gi(new_gi)
             return
 
-        # Catch non-recoverable errors
+        # Catch other errors
         except Exception as err:
             print("ERROR: " + str(err))
             return
 
-        # Look at what we got
+        # Validate header
         status, mime = header.split(maxsplit=1)
-        # Handle different statuses.
-        # Everything other than success
-        if status.startswith("2"):
-            if mime == "":
-                mime = "text/gemini; charset=utf-8"
-            mime, mime_options = cgi.parse_header(mime)
-            if "charset" in mime_options:
-                try:
-                    codecs.lookup(mime_options["charset"])
-                except LookupError:
-                    print("Header declared unknown encoding %s" % value)
-                    return
-        # Handle redirects
+        if len(header) > 1024 or len(status) > 2 or not status.isnumeric():
+            print("ERROR: Received invalid header from server!")
+            f.close()
+            return
+
+        # Handle non-SUCCESS headers, which don't have a response body
+        # Inputs
+        if status.startswith("1"):
+            print("User input not supported.")
+        # Redirects
         elif status.startswith("3"):
             self._debug("Following redirect to %s." % mime)
             new_gi = GeminiItem(gi.host, gi.port, mime, None)
             self._go_to_gi(new_gi)
             return
-        # Error
+        # Errors
         elif status.startswith("4") or status.startswith("5"):
             print("Error: %s" % mime)
             return
@@ -281,8 +274,25 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         elif status.startswith("6"):
             print("Client certificates not supported.")
             return
+        # Invalid status
+        elif not status.startswith("2"):
+            print("ERROR: Server returned undefined status code %s!" % status)
+            return
 
-        # If we're still here, this is a success and there's a response body
+        # If we're here, this must be a success and there's a response body
+        assert status.startswith("2")
+        if mime == "":
+            mime = "text/gemini; charset=utf-8"
+        mime, mime_options = cgi.parse_header(mime)
+        if "charset" in mime_options:
+            try:
+                codecs.lookup(mime_options["charset"])
+            except LookupError:
+                print("Header declared unknown encoding %s" % value)
+                return
+
+        # Read the response body over the network
+        body = f.read()
 
         # Save the result in a temporary file
         ## Delete old file
