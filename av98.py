@@ -129,7 +129,7 @@ class GeminiItem():
         A thin wrapper around urlunparse which avoids inserting standard ports
         into URLs just to keep things clean.
         """
-        return = urllib.parse.urlunparse((self.scheme,
+        return urllib.parse.urlunparse((self.scheme,
             self.host if self.port == standard_ports[self.scheme] else self.host + ":" + str(self.port),
             path or self.path, "", query, ""))
 
@@ -605,7 +605,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
     @needs_gi
     def do_up(self, *args):
         """Go up one directory in the path."""
-        self._go_to_gi(self.gi.up()))
+        self._go_to_gi(self.gi.up())
 
     def do_back(self, *args):
         """Go back to the previous gemini item."""
@@ -635,7 +635,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
     @needs_gi
     def do_root(self, *args):
         """Go to root selector of the server hosting current item."""
-        self._go_to_gi(self.gi.root()))
+        self._go_to_gi(self.gi.root())
 
     def do_tour(self, line):
         """Add index items as waypoints on a tour, which is basically a FIFO
