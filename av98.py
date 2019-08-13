@@ -248,7 +248,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             return
 
         # Validate header
-        status, mime = header.split(maxsplit=1)
+        status, meta = header.split(maxsplit=1)
         if len(header) > 1024 or len(status) > 2 or not status.isnumeric():
             print("ERROR: Received invalid header from server!")
             f.close()
@@ -261,13 +261,13 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             return
         # Redirects
         elif status.startswith("3"):
-            new_gi = GeminiItem(gi.absolutise_url(mime))
+            new_gi = GeminiItem(gi.absolutise_url(meta))
             self._debug("Following redirect to %s." % new_gi.url)
             self._go_to_gi(new_gi)
             return
         # Errors
         elif status.startswith("4") or status.startswith("5"):
-            print("Error: %s" % mime)
+            print("Error: %s" % meta)
             return
         # Client cert
         elif status.startswith("6"):
@@ -280,6 +280,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
 
         # If we're here, this must be a success and there's a response body
         assert status.startswith("2")
+        mime = meta
         if mime == "":
             mime = "text/gemini; charset=utf-8"
         mime, mime_options = cgi.parse_header(mime)
