@@ -181,7 +181,7 @@ class GeminiClient(cmd.Cmd):
         self.options = {
             "color_menus" : False,
             "debug" : False,
-            "ipv6" : False,
+            "ipv6" : True,
             "timeout" : 10,
             "gopher_proxy" : "localhost:1965",
         }
