@@ -258,6 +258,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         # Inputs
         if status.startswith("1"):
             print("User input not supported.")
+            return
         # Redirects
         elif status.startswith("3"):
             new_gi = GeminiItem(gi.absolutise_url(mime))
