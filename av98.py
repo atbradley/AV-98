@@ -63,18 +63,6 @@ _MIME_HANDLERS = {
     "text/gemini":          "cat %s",
 }
 
-_ANSI_COLORS = {
-    "red":      "\x1b[0;31m",
-    "green":    "\x1b[0;32m",
-    "yellow":   "\x1b[0;33m",
-    "blue":     "\x1b[0;34m",
-    "purple":   "\x1b[0;35m",
-    "cyan":     "\x1b[0;36m",
-    "white":    "\x1b[0;37m",
-    "black":    "\x1b[0;30m",
-}
-
-
 def fix_ipv6_url(url):
     if not url.count(":") > 2: # Best way to detect them?
         return url
@@ -200,7 +188,6 @@ class GeminiClient(cmd.Cmd):
         self.waypoints = []
 
         self.options = {
-            "color_menus" : False,
             "debug" : False,
             "ipv6" : True,
             "timeout" : 10,
