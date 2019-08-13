@@ -126,6 +126,12 @@ class GeminiItem():
             self.host if self.port == standard_ports[self.scheme] else self.host + ":" + str(self.port),
             new_path, "", "", ""))
 
+    def add_query(self, query):
+        new_url = urllib.parse.urlunparse((self.scheme,
+            self.host if self.port == standard_ports[self.scheme] else self.host + ":" + str(self.port),
+            self.path, "", query, ""))
+        return GeminiItem(new_url)
+
     def absolutise_url(self, relative_url):
         """
         Convert a relative URL to an absolute URL by using the URL of this
@@ -257,7 +263,9 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         # Handle non-SUCCESS headers, which don't have a response body
         # Inputs
         if status.startswith("1"):
-            print("User input not supported.")
+            user_input = input(meta)
+            new_gi = gi.add_query(user_input)
+            self._go_to_gi(new_gi)
             return
         # Redirects
         elif status.startswith("3"):
