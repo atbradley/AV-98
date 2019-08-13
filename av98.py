@@ -105,10 +105,10 @@ class GeminiItem():
         self.port = parsed.port or standard_ports[self.scheme]
         self.path = parsed.path
 
-    def root_url(self):
-        return self._derive_url("/")
+    def root(self):
+        return GeminiItem(self._derive_url("/"))
 
-    def up_url(self):
+    def up(self):
         pathbits = list(os.path.split(self.path))
         # Get rid of empty string from trailing /
         while not pathbits[-1]:
@@ -119,9 +119,9 @@ class GeminiItem():
         # Get rid of bottom component
         pathbits.pop()
         new_path = os.path.join(*pathbits)
-        return self._derive_url(new_path)
+        return GeminiItem(self._derive_url(new_path))
 
-    def add_query(self, query):
+    def query(self, query):
         return GeminiItem(self._derive_url(query=query))
 
     def _derive_url(self, path="", query=""):
@@ -264,8 +264,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         # Inputs
         if status.startswith("1"):
             user_input = input(meta)
-            new_gi = gi.add_query(user_input)
-            self._go_to_gi(new_gi)
+            self._go_to_gi(gi.query(user_input))
             return
         # Redirects
         elif status.startswith("3"):
@@ -606,7 +605,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
     @needs_gi
     def do_up(self, *args):
         """Go up one directory in the path."""
-        self._go_to_gi(GeminiItem(self.gi.up_url()))
+        self._go_to_gi(self.gi.up()))
 
     def do_back(self, *args):
         """Go back to the previous gemini item."""
@@ -636,7 +635,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
     @needs_gi
     def do_root(self, *args):
         """Go to root selector of the server hosting current item."""
-        self._go_to_gi(GeminiItem(self.gi.root_url()))
+        self._go_to_gi(self.gi.root()))
 
     def do_tour(self, line):
         """Add index items as waypoints on a tour, which is basically a FIFO
