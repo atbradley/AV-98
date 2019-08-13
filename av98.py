@@ -89,9 +89,6 @@ _ITEMTYPE_COLORS = {
 
 CRLF = '\r\n'
 
-_GOPHER_PROXY_HOST = "localhost"
-_GOPHER_PROXY_PORT = 1965
-
 # Lightweight representation of an item in Geminispace
 GeminiItem = collections.namedtuple("GeminiItem",
         ("scheme", "host", "port", "path", "name"))
@@ -199,6 +196,7 @@ class GeminiClient(cmd.Cmd):
             "debug" : False,
             "ipv6" : False,
             "timeout" : 10,
+            "gopher_proxy" : "localhost:1965",
         }
 
         self.log = {
@@ -345,9 +343,13 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         """Send a selector to a given host and port.
         Returns the resolved address and binary file with the reply."""
         if gi.scheme == "gemini":
-            addresses = self._get_addresses(gi.host, gi.port)
+            # For Gemini requests, connect to the host and port specified in the URL
+            host, port = gi.host, gi.port
         elif gi.scheme == "gopher":
-            addresses = self._get_addresses(_GOPHER_PROXY_HOST, _GOPHER_PROXY_PORT)
+            # For Gopher requests, use the configured proxy
+            host, port = self.options["gopher_proxy"].rsplit(":", 1)
+            self._debug("Using gopher proxy: " + self.options["gopher_proxy"])
+        addresses = self._get_addresses(host, port)
         # Connect to remote host by any address possible
         err = None
         for address in addresses:
@@ -553,16 +555,27 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             for option in sorted(self.options.keys()):
                 print("%s   %s" % (option, self.options[option]))
         elif len(line.split()) == 1:
+            # Show current value of one specific setting
             option = line.strip()
             if option in self.options:
                 print("%s   %s" % (option, self.options[option]))
             else:
                 print("Unrecognised option %s" % option)
         else:
+            # Set value of one specific setting
             option, value = line.split(" ", 1)
             if option not in self.options:
                 print("Unrecognised option %s" % option)
                 return
+            # Validate / convert values
+            if option == "gopher_proxy":
+                if ":" not in value:
+                    value += ":1965"
+                else:
+                    host, port = value.rsplit(":",1)
+                    if not port.isnumeric():
+                        print("Invalid proxy port %s" % port)
+                        return
             elif value.isnumeric():
                 value = int(value)
             elif value.lower() == "false":
