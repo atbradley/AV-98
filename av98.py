@@ -255,7 +255,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
 
         # Validate header
         status, meta = header.split(maxsplit=1)
-        if len(header) > 1024 or len(status) > 2 or not status.isnumeric():
+        if len(header) > 1024 or len(status) != 2 or not status.isnumeric():
             print("ERROR: Received invalid header from server!")
             f.close()
             return
