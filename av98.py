@@ -139,9 +139,15 @@ class GeminiItem():
         GeminiItem as a base.
         """
         # Absolutise URL, which annoyingly needs a valid scheme...
-        base_url = self.url.replace("gemini://", "https://")
+        if self.url.startswith("gemini://"):
+            base_url = self.url.replace("gemini://", "https://")
+            was_gemini = True
+        else:
+            base_url = self.url
+            was_gemini = False
         absolute = urllib.parse.urljoin(base_url, relative_url)
-        absolute = absolute.replace("https://", "gemini://")
+        if was_gemini:
+            absolute = absolute.replace("https://", "gemini://")
         return absolute
 
     def to_map_line(self, name=None):
