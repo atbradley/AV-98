@@ -226,6 +226,10 @@ class GeminiClient(cmd.Cmd):
         sending the request over the network, parsing the response if
         its a menu, storing the response in a temporary file, choosing
         and calling a handler program, and updating the history."""
+        # Don't try to speak to servers running other protocols
+        if gi.scheme not in ("gemini", "gopher"):
+            print("Sorry, no support for " + gi.scheme)
+            return
         # Do everything which touches the network in one block,
         # so we only need to catch exceptions once
         try:
