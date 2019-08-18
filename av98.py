@@ -879,7 +879,7 @@ Bookmarks are stored in the ~/.av98-bookmarks.txt file."""
         else:
             with open(bm_file, "r") as fp:
                 body = fp.read()
-                gi = GeminiItem("file://localhost/" + bm_file)
+                gi = GeminiItem("localhost/" + bm_file)
                 self._handle_index(body, gi)
 
     ### Help
