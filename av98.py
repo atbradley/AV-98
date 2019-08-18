@@ -860,13 +860,14 @@ Optionally, specify the new name for the bookmark."""
     def do_bookmarks(self, *args):
         """Show the current bookmarks menu.
 Bookmarks are stored in the ~/.av98-bookmarks.txt file."""
-        file_name = "~/.av98-bookmarks.txt"
-        if not os.path.isfile(os.path.expanduser(file_name)):
-            print("You need to 'add' some bookmarks, first")
+        bm_file = os.path.expanduser("~/.av98-bookmarks.txt")
+        if not os.path.exists(bm_file):
+            print("You need to 'add' some bookmarks, first!")
         else:
-            gi = GeminiItem(None, None, os.path.expanduser(file_name),
-                            file_name)
-            self._go_to_gi(gi)
+            with open(bm_file, "r") as fp:
+                body = fp.read()
+                gi = GeminiItem("file://localhost/" + bm_file)
+                self._handle_index(body, gi)
 
     ### Help
     def do_help(self, arg):
