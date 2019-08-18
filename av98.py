@@ -26,6 +26,7 @@ import sys
 import tempfile
 import urllib.parse
 import ssl
+import sys
 import time
 
 # Command abbreviations
@@ -373,10 +374,18 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             context = ssl.SSLContext()
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
+            # Impose minimum TLS version
+            if sys.version_info.minor == 7:
+                context.minimum_version = ssl.TLSVersion.TLSv1_2
+            else:
+                context.options | ssl.OP_NO_TLSv1_1
+                context.options | ssl.OP_NO_SSLv3
+                context.options | ssl.OP_NO_SSLv2
+            context.set_ciphers("AES+DHE:AES+ECDHE:CHACHA20+DHE:CHACHA20+ECDHE:!SHA1:@STRENGTH")
+            #print(context.get_ciphers())
             s = context.wrap_socket(s, server_hostname = gi.host)
             try:
                 s.connect(address[4])
-                self._debug("Established {} connection.".format(s.version()))
                 break
             except OSError as e:
                 err = e
@@ -385,6 +394,10 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             # bubble up the exception from the last attempt and deny
             # knowledge of earlier failures.
             raise err
+
+        self._debug("Established {} connection.".format(s.version()))
+        self._debug("Cipher is: {}.".format(s.cipher()))
+
         # Send request and wrap response in a file descriptor
         self._debug("Sending %s<CRLF>" % gi.url)
         s.sendall((gi.url + CRLF).encode("UTF-8"))
