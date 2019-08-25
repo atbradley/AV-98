@@ -371,7 +371,8 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             self._debug("Connecting to: " + str(address[4]))
             s = socket.socket(address[0], address[1])
             s.settimeout(self.options["timeout"])
-            context = ssl.SSLContext()
+            protocol = ssl.PROTOCOL_TLSv1_2 if sys.version_info.minor < 5 else ssl.PROTOCOL_TLS
+            context = ssl.SSLContext(protocol)
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
             # Impose minimum TLS version
