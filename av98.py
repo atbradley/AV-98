@@ -153,9 +153,9 @@ class GeminiItem():
 
     def to_map_line(self, name=None):
         if name or self.name:
-            return "=> {} {}".format(self.url, name or self.name)
+            return "=> {} {}\n".format(self.url, name or self.name)
         else:
-            return "=> {}".format(self.url)
+            return "=> {}\n".format(self.url)
 
     @classmethod
     def from_map_line(cls, line, origin_gi):
