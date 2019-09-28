@@ -110,10 +110,7 @@ class GeminiItem():
         return GeminiItem(self._derive_url("/"))
 
     def up(self):
-        pathbits = list(os.path.split(self.path))
-        # Get rid of empty string from trailing /
-        if not pathbits[-1]:
-            pathbits.pop()
+        pathbits = list(os.path.split(self.path.rstrip('/')))
         # Don't try to go higher than root
         if len(pathbits) == 1:
             return self
