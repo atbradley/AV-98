@@ -116,7 +116,7 @@ class GeminiItem():
             pathbits.pop()
         # Don't try to go higher than root
         if len(pathbits) == 1:
-            return self.url
+            return GeminiItem(self.url)
         # Get rid of bottom component
         pathbits.pop()
         new_path = os.path.join(*pathbits)
