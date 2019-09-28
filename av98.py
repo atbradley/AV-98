@@ -112,7 +112,7 @@ class GeminiItem():
     def up(self):
         pathbits = list(os.path.split(self.path))
         # Get rid of empty string from trailing /
-        while not pathbits[-1]:
+        if not pathbits[-1]:
             pathbits.pop()
         # Don't try to go higher than root
         if len(pathbits) == 1:
