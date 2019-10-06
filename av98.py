@@ -110,13 +110,10 @@ class GeminiItem():
         return GeminiItem(self._derive_url("/"))
 
     def up(self):
-        pathbits = list(os.path.split(self.path))
-        # Get rid of empty string from trailing /
-        while not pathbits[-1]:
-            pathbits.pop()
+        pathbits = list(os.path.split(self.path.rstrip('/')))
         # Don't try to go higher than root
         if len(pathbits) == 1:
-            return self.url
+            return self
         # Get rid of bottom component
         pathbits.pop()
         new_path = os.path.join(*pathbits)
@@ -153,9 +150,9 @@ class GeminiItem():
 
     def to_map_line(self, name=None):
         if name or self.name:
-            return "=> {} {}".format(self.url, name or self.name)
+            return "=> {} {}\n".format(self.url, name or self.name)
         else:
-            return "=> {}".format(self.url)
+            return "=> {}\n".format(self.url)
 
     @classmethod
     def from_map_line(cls, line, origin_gi):
