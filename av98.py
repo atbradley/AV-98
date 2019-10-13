@@ -29,6 +29,8 @@ import ssl
 import sys
 import time
 
+_MAX_REDIRECTS = 5
+
 # Command abbreviations
 _ABBREVS = {
     "a":    "add",
@@ -193,6 +195,7 @@ class GeminiClient(cmd.Cmd):
         self.lookup = self.index
         self.marks = {}
         self.page_index = 0
+        self.previous_redirectors = set()
         self.tmp_filename = ""
         self.visited_hosts = set()
         self.waypoints = []
@@ -268,6 +271,10 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             f.close()
             return
 
+        # Update redirect loop/maze escaping state
+        if not status.startswith("3"):
+            self.previous_redirectors = set()
+
         # Handle non-SUCCESS headers, which don't have a response body
         # Inputs
         if status.startswith("1"):
@@ -277,8 +284,15 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         # Redirects
         elif status.startswith("3"):
             new_gi = GeminiItem(gi.absolutise_url(meta))
-            self._debug("Following redirect to %s." % new_gi.url)
-            self._go_to_gi(new_gi)
+            if new_gi.url in self.previous_redirectors:
+                print("Error: caught in redirect loop!")
+            elif len(self.previous_redirectors) == _MAX_REDIRECTS:
+                print("Error: refusing to follow more than %d consecutive redirects!" % _MAX_REDIRECTS)
+            else:
+                self.previous_redirectors.add(gi.url)
+                self._debug("Following redirect to %s." % new_gi.url)
+                self._debug("This is consecutive redirect number %d." % len(self.previous_redirectors))
+                self._go_to_gi(new_gi)
             return
         # Errors
         elif status.startswith("4") or status.startswith("5"):
