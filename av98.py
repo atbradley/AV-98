@@ -205,6 +205,7 @@ class GeminiClient(cmd.Cmd):
             "ipv6" : True,
             "timeout" : 10,
             "gopher_proxy" : "localhost:1965",
+            "auto_follow_redirects" : True,
         }
 
         self.log = {
@@ -284,7 +285,11 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         # Redirects
         elif status.startswith("3"):
             new_gi = GeminiItem(gi.absolutise_url(meta))
-            if new_gi.url in self.previous_redirectors:
+            if not self.options["auto_follow_redirects"]:
+                follow = input("Follow redirect to %s? (y/n) " % new_gi.url)
+                if follow.strip().lower() in ("y", "yes"):
+                    self._go_to_gi(new_gi)
+            elif new_gi.url in self.previous_redirectors:
                 print("Error: caught in redirect loop!")
             elif len(self.previous_redirectors) == _MAX_REDIRECTS:
                 print("Error: refusing to follow more than %d consecutive redirects!" % _MAX_REDIRECTS)
