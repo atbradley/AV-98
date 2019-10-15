@@ -195,6 +195,7 @@ class GeminiClient(cmd.Cmd):
         self.lookup = self.index
         self.marks = {}
         self.page_index = 0
+        self.permanent_redirects = {}
         self.previous_redirectors = set()
         self.tmp_filename = ""
         self.visited_hosts = set()
@@ -231,6 +232,11 @@ class GeminiClient(cmd.Cmd):
         # Don't try to speak to servers running other protocols
         if gi.scheme not in ("gemini", "gopher"):
             print("Sorry, no support for " + gi.scheme)
+            return
+        # Obey permanent redirects
+        if gi.url in self.permanent_redirects:
+            new_gi = GeminiItem(self.permanent_redirects[gi.url], name=gi.name)
+            self._go_to_gi(new_gi)
             return
         # Do everything which touches the network in one block,
         # so we only need to catch exceptions once
@@ -285,18 +291,21 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         # Redirects
         elif status.startswith("3"):
             new_gi = GeminiItem(gi.absolutise_url(meta))
-            if not self.options["auto_follow_redirects"]:
-                follow = input("Follow redirect to %s? (y/n) " % new_gi.url)
-                if follow.strip().lower() in ("y", "yes"):
-                    self._go_to_gi(new_gi)
-            elif new_gi.url in self.previous_redirectors:
+            if new_gi.url in self.previous_redirectors:
                 print("Error: caught in redirect loop!")
             elif len(self.previous_redirectors) == _MAX_REDIRECTS:
                 print("Error: refusing to follow more than %d consecutive redirects!" % _MAX_REDIRECTS)
+            elif not self.options["auto_follow_redirects"]:
+                follow = input("Follow redirect to %s? (y/n) " % new_gi.url)
+                if follow.strip().lower() not in ("y", "yes"):
+                    return
             else:
-                self.previous_redirectors.add(gi.url)
                 self._debug("Following redirect to %s." % new_gi.url)
                 self._debug("This is consecutive redirect number %d." % len(self.previous_redirectors))
+                self.previous_redirectors.add(gi.url)
+                if status == "31":
+                    # Permanent redirect
+                    self.permanent_redirects[gi.url] = new_gi.url
                 self._go_to_gi(new_gi)
             return
         # Errors
