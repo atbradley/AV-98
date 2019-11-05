@@ -28,6 +28,7 @@ import urllib.parse
 import ssl
 import sys
 import time
+import webbrowser
 
 _MAX_REDIRECTS = 5
 
@@ -230,7 +231,10 @@ class GeminiClient(cmd.Cmd):
         its a menu, storing the response in a temporary file, choosing
         and calling a handler program, and updating the history."""
         # Don't try to speak to servers running other protocols
-        if gi.scheme not in ("gemini", "gopher"):
+        if gi.scheme in ("http", "https"):
+            webbrowser.open_new_tab(gi.url)
+            return
+        elif gi.scheme not in ("gemini", "gopher"):
             print("Sorry, no support for " + gi.scheme)
             return
         # Obey permanent redirects
