@@ -146,7 +146,7 @@ class GeminiItem():
             base_url = self.url
             was_gemini = False
         absolute = urllib.parse.urljoin(base_url, relative_url)
-        if was_gemini:
+        if absolute != relative_url and was_gemini:
             absolute = absolute.replace("https://", "gemini://")
         return absolute
 
