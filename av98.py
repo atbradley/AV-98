@@ -24,6 +24,7 @@ import socket
 import subprocess
 import sys
 import tempfile
+import textwrap
 import urllib.parse
 import ssl
 import sys
@@ -207,6 +208,7 @@ class GeminiClient(cmd.Cmd):
             "ipv6" : True,
             "timeout" : 10,
             "gopher_proxy" : "localhost:1965",
+            "width" : 80,
             "auto_follow_redirects" : True,
         }
 
@@ -486,7 +488,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                 except:
                     self._debug("Skipping possible link: %s" % line)
             else:
-                tmpf.write(line + "\n")
+                tmpf.write(textwrap.fill(line, self.options["width"]) + "\n")
         tmpf.close()
 
         self.lookup = self.index
