@@ -475,12 +475,17 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
 
     def _handle_index(self, body, menu_gi):
         self.index = []
+        preformatted = False
         if self.idx_filename:
             os.unlink(self.idx_filename)
         tmpf = tempfile.NamedTemporaryFile("w", encoding="UTF-8", delete=False)
         self.idx_filename = tmpf.name
         for line in body.splitlines():
-            if line.startswith("=>"):
+            if line.startswith("```"):
+                preformatted = not preformatted
+            elif preformatted:
+                tmpf.write(line + "\n")
+            elif line.startswith("=>"):
                 try:
                     gi = GeminiItem.from_map_line(line, menu_gi)
                     self.index.append(gi)
