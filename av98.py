@@ -492,6 +492,19 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                     tmpf.write(self._format_geminiitem(len(self.index), gi) + "\n")
                 except:
                     self._debug("Skipping possible link: %s" % line)
+            elif line.startswith("*"):
+                line = line[1:].lstrip()
+                tmpf.write(textwrap.fill(line, self.options["width"],
+                    initial_indent = "• ", subsequent_indent="  ") + "\n")
+            elif line.startswith("###"):
+                line = line[3:].lstrip()
+                tmpf.write("\x1b[4m" + line + "\x1b[0m""\n")
+            elif line.startswith("##"):
+                line = line[2:].lstrip()
+                tmpf.write("\x1b[1m" + line + "\x1b[0m""\n")
+            elif line.startswith("#"):
+                line = line[1:].lstrip()
+                tmpf.write("\x1b[1m\x1b[4m" + line + "\x1b[0m""\n")
             else:
                 tmpf.write(textwrap.fill(line, self.options["width"]) + "\n")
         tmpf.close()
