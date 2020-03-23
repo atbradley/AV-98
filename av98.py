@@ -68,6 +68,21 @@ _MIME_HANDLERS = {
     "text/gemini":          "cat %s",
 }
 
+protocol = ssl.PROTOCOL_TLSv1_2 if sys.version_info.minor < 5 else ssl.PROTOCOL_TLS
+context = ssl.SSLContext(protocol)
+context.check_hostname = False
+context.verify_mode = ssl.CERT_NONE
+# Impose minimum TLS version
+if sys.version_info.minor == 7:
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
+else:
+    context.options |= ssl.OP_NO_TLSv1_1
+    context.options |= ssl.OP_NO_SSLv3
+    context.options |= ssl.OP_NO_SSLv2
+context.set_ciphers("AES+DHE:AES+ECDHE:CHACHA20+DHE:CHACHA20+ECDHE:!SHA1:@STRENGTH")
+# print(context.get_ciphers())
+
+
 def fix_ipv6_url(url):
     if not url.count(":") > 2: # Best way to detect them?
         return url
@@ -402,19 +417,6 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             self._debug("Connecting to: " + str(address[4]))
             s = socket.socket(address[0], address[1])
             s.settimeout(self.options["timeout"])
-            protocol = ssl.PROTOCOL_TLSv1_2 if sys.version_info.minor < 5 else ssl.PROTOCOL_TLS
-            context = ssl.SSLContext(protocol)
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
-            # Impose minimum TLS version
-            if sys.version_info.minor == 7:
-                context.minimum_version = ssl.TLSVersion.TLSv1_2
-            else:
-                context.options | ssl.OP_NO_TLSv1_1
-                context.options | ssl.OP_NO_SSLv3
-                context.options | ssl.OP_NO_SSLv2
-            context.set_ciphers("AES+DHE:AES+ECDHE:CHACHA20+DHE:CHACHA20+ECDHE:!SHA1:@STRENGTH")
-            #print(context.get_ciphers())
             s = context.wrap_socket(s, server_hostname = gi.host)
             try:
                 s.connect(address[4])
@@ -1004,6 +1006,8 @@ def main():
     parser = argparse.ArgumentParser(description='A command line gemini client.')
     parser.add_argument('--bookmarks', action='store_true',
                         help='start with your list of bookmarks')
+    parser.add_argument('--tls-cert', metavar='FILE', help='TLS client certificate file')
+    parser.add_argument('--tls-key', metavar='FILE', help='TLS client certificate private key file')
     parser.add_argument('url', metavar='URL', nargs='*',
                         help='start with this URL')
     args = parser.parse_args()
@@ -1033,6 +1037,9 @@ def main():
     print("Enjoy your patrol through Geminispace...")
 
     # Act on args
+    if args.tls_cert:
+        # If tls_key is None, python will attempt to load the key from tls_cert.
+        context.load_cert_chain(args.tls_cert, args.tls_key)
     if args.bookmarks:
         gc.cmdqueue.append("bookmarks")
     elif args.url:
