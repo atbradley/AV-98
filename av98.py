@@ -475,7 +475,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         self._debug("Using handler: %s" % cmd_str)
         return cmd_str
 
-    def _handle_index(self, body, menu_gi):
+    def _handle_index(self, body, menu_gi, display=True):
         self.index = []
         preformatted = False
         if self.idx_filename:
@@ -515,8 +515,9 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         self.page_index = 0
         self.index_index = -1
 
-        cmd_str = _MIME_HANDLERS["text/plain"]
-        subprocess.call(shlex.split(cmd_str % self.idx_filename))
+        if display:
+            cmd_str = _MIME_HANDLERS["text/plain"]
+            subprocess.call(shlex.split(cmd_str % self.idx_filename))
 
     def _format_geminiitem(self, index, gi, url=False):
         line = "[%d] %s" % (index, gi.name or gi.url)
@@ -922,17 +923,26 @@ Optionally, specify the new name for the bookmark."""
         with open(os.path.expanduser("~/.av98-bookmarks.txt"), "a") as fp:
             fp.write(self.gi.to_map_line(line))
 
-    def do_bookmarks(self, *args):
-        """Show the current bookmarks menu.
-Bookmarks are stored in the ~/.av98-bookmarks.txt file."""
+    def do_bookmarks(self, line):
+        """Show or access the bookmarks menu.
+'bookmarks' shows all bookmarks.
+'bookmarks n' navigates immediately to item n in the bookmark menu.
+Bookmarks are stored in the ~/.av98-bookmarks.txt file using the 'add' command."""
         bm_file = os.path.expanduser("~/.av98-bookmarks.txt")
         if not os.path.exists(bm_file):
             print("You need to 'add' some bookmarks, first!")
-        else:
-            with open(bm_file, "r") as fp:
-                body = fp.read()
-                gi = GeminiItem("localhost/" + bm_file)
-                self._handle_index(body, gi)
+            return
+        args = line.strip()
+        if len(args.split()) > 1 or (args and not args.isnumeric()):
+            print("bookmarks command takes a single integer argument!")
+            return
+        with open(bm_file, "r") as fp:
+            body = fp.read()
+            gi = GeminiItem("localhost/" + bm_file)
+            self._handle_index(body, gi, display = not args)
+            if args:
+                # Use argument as a numeric index
+                self.default(line)
 
     ### Help
     def do_help(self, arg):
