@@ -73,7 +73,7 @@ context = ssl.SSLContext(protocol)
 context.check_hostname = False
 context.verify_mode = ssl.CERT_NONE
 # Impose minimum TLS version
-if sys.version_info.minor == 7:
+if sys.version_info.minor >= 7:
     context.minimum_version = ssl.TLSVersion.TLSv1_2
 else:
     context.options |= ssl.OP_NO_TLSv1_1
