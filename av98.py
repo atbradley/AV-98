@@ -198,9 +198,19 @@ def needs_gi(inner):
     outer.__doc__ = inner.__doc__
     return outer
 
+def restricted(inner):
+    def outer(self, *args, **kwargs):
+        if self.restricted:
+            print("Sorry, this command is not available in restricted mode!")
+            return None
+        else:
+            return inner(self, *args, **kwargs)
+    outer.__doc__ = inner.__doc__
+    return outer
+
 class GeminiClient(cmd.Cmd):
 
-    def __init__(self):
+    def __init__(self, restricted=False):
         cmd.Cmd.__init__(self)
         self.prompt = "\x1b[38;5;202m" + "AV-98" + "\x1b[38;5;255m" + "> " + "\x1b[0m"
         self.gi = None
@@ -214,6 +224,7 @@ class GeminiClient(cmd.Cmd):
         self.page_index = 0
         self.permanent_redirects = {}
         self.previous_redirectors = set()
+        self.restricted = restricted
         self.tmp_filename = ""
         self.visited_hosts = set()
         self.waypoints = []
@@ -596,6 +607,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         self._go_to_gi(gi)
 
     ### Settings
+    @restricted
     def do_set(self, line):
         """View or set various options."""
         if not line.strip():
@@ -637,6 +649,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                     pass
             self.options[option] = value
 
+    @restricted
     def do_handler(self, line):
         """View or set handler commands for different MIME types."""
         if not line.strip():
@@ -829,11 +842,13 @@ Use 'ls -l' to see URLs."""
         cmd_str = cmd_str % self._get_active_tmpfile()
         subprocess.call("%s | fold -w 70 -s" % cmd_str, shell=True)
 
+    @restricted
     @needs_gi
     def do_shell(self, line):
         """'cat' most recently visited item through a shell pipeline."""
         subprocess.call(("cat %s |" % self._get_active_tmpfile()) + line, shell=True)
 
+    @restricted
     @needs_gi
     def do_save(self, line):
         """Save an item to the filesystem.
@@ -915,6 +930,7 @@ Use 'ls -l' to see URLs."""
         print(self.gi.url)
 
     ### Bookmarking stuff
+    @restricted
     @needs_gi
     def do_add(self, line):
         """Add the current URL to the bookmarks menu.
@@ -1018,12 +1034,13 @@ def main():
                         help='start with your list of bookmarks')
     parser.add_argument('--tls-cert', metavar='FILE', help='TLS client certificate file')
     parser.add_argument('--tls-key', metavar='FILE', help='TLS client certificate private key file')
+    parser.add_argument('--restricted', action="store_true", help='Disallow shell, add, and save commands')
     parser.add_argument('url', metavar='URL', nargs='*',
                         help='start with this URL')
     args = parser.parse_args()
 
     # Instantiate client
-    gc = GeminiClient()
+    gc = GeminiClient(args.restricted)
 
     # Process config file
     rcfile = get_rcfile()
@@ -1044,6 +1061,8 @@ def main():
 
     # Say hi
     print("Welcome to AV-98!")
+    if args.restricted:
+        print("Restricted mode engaged!")
     print("Enjoy your patrol through Geminispace...")
 
     # Act on args
