@@ -68,20 +68,27 @@ _MIME_HANDLERS = {
     "text/gemini":          "cat %s",
 }
 
-protocol = ssl.PROTOCOL_TLSv1_2 if sys.version_info.minor < 5 else ssl.PROTOCOL_TLS
+protocol = ssl.PROTOCOL_TLS if sys.version_info.minor >=6 else ssl.PROTOCOL_TLSv1_2
 context = ssl.SSLContext(protocol)
 context.check_hostname = False
 context.verify_mode = ssl.CERT_NONE
 # Impose minimum TLS version
+## In 3.7 and above, this is easy...
 if sys.version_info.minor >= 7:
     context.minimum_version = ssl.TLSVersion.TLSv1_2
+## Otherwise, it seems very hard...
+## The below is less strict than it ought to be, but trying to disable
+## TLS v1.1 here using ssl.OP_NO_TLSv1_1 produces unexpected failures
+## with recent versions of OpenSSL.  What a mess...
 else:
-    context.options |= ssl.OP_NO_TLSv1_1
     context.options |= ssl.OP_NO_SSLv3
     context.options |= ssl.OP_NO_SSLv2
-context.set_ciphers("AES+DHE:AES+ECDHE:CHACHA20+DHE:CHACHA20+ECDHE:!SHA1:@STRENGTH")
-# print(context.get_ciphers())
-
+# Try to enforce sensible ciphers
+try:
+    context.set_ciphers("AES+DHE:AES+ECDHE:CHACHA20+DHE:CHACHA20+ECDHE:!SHA1:@STRENGTH")
+except ssl.SSLError:
+    # Rely on the server to only support sensible things, I guess...
+    pass
 
 def fix_ipv6_url(url):
     if not url.count(":") > 2: # Best way to detect them?
@@ -440,7 +447,8 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             # knowledge of earlier failures.
             raise err
 
-        self._debug("Established {} connection.".format(s.version()))
+        if sys.version_info.minor >=5:
+            self._debug("Established {} connection.".format(s.version()))
         self._debug("Cipher is: {}.".format(s.cipher()))
 
         # Send request and wrap response in a file descriptor
