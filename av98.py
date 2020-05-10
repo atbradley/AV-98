@@ -282,7 +282,7 @@ class GeminiClient(cmd.Cmd):
             print("PRIVACY ALERT: Reactivate previously used client cert for {}?".format(gi.host))
             resp = input("Y/N? ")
             if resp.strip().lower() in ("y", "yes"):
-                self._activate_client_cert(self.client_certs[gi.host])
+                self._activate_client_cert(*self.client_certs[gi.host])
             else:
                 print("Remaining unidentified.")
                 self.client_certs.pop(gi.host)
