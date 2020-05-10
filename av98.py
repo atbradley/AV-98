@@ -219,6 +219,7 @@ class GeminiClient(cmd.Cmd):
         self.client_certs = {
             "active": None
         }
+        self.active_cert_domains = []
 
         self.options = {
             "debug" : False,
@@ -261,6 +262,17 @@ class GeminiClient(cmd.Cmd):
             new_gi = GeminiItem(self.permanent_redirects[gi.url], name=gi.name)
             self._go_to_gi(new_gi)
             return
+        # Be careful with client certificates
+        if self.active_cert_domains and gi.host not in self.active_cert_domains:
+            print("PRIVACY ALERT: Deactivate client cert before connecting to a new domain?")
+            resp = input("Y/N? ")
+            if resp.lower in ("n", "no"):
+                print("Keeping certificate active for {}".format(gi.host))
+            else:
+                print("Deactivating certificate.")
+                self.client_certs["active"] = None
+                self.active_cert_domains = []
+                self.prompt = self.no_cert_prompt
         # Do everything which touches the network in one block,
         # so we only need to catch exceptions once
         try:
@@ -464,6 +476,11 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         if sys.version_info.minor >=5:
             self._debug("Established {} connection.".format(s.version()))
         self._debug("Cipher is: {}.".format(s.cipher()))
+
+        # Remember that we showed the current cert to this domain...
+        if self.client_certs["active"]:
+            self.active_cert_domains.append(gi.host)
+            self.client_certs[gi.host] = self.client_certs["active"]
 
         # Send request and wrap response in a file descriptor
         self._debug("Sending %s<CRLF>" % gi.url)
@@ -677,6 +694,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         if self.client_certs["active"]:
             print("Deactivating client certificate.")
             self.client_certs["active"] = None
+            self.active_cert_domains = []
             self.prompt = self.no_cert_prompt
         else:
             print("Loading client certificate file, in PEM format (blank line to cancel)")
@@ -684,6 +702,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             print("Loading private key file, in PEM format (blank line to cancel)")
             keyfile = input("Keyfile path: ")
             self.client_certs["active"] = (certfile, keyfile)
+            self.active_cert_domains = []
             self.prompt = self.cert_prompt
 
     @restricted
