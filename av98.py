@@ -68,28 +68,6 @@ _MIME_HANDLERS = {
     "text/gemini":          "cat %s",
 }
 
-protocol = ssl.PROTOCOL_TLS if sys.version_info.minor >=6 else ssl.PROTOCOL_TLSv1_2
-context = ssl.SSLContext(protocol)
-context.check_hostname = False
-context.verify_mode = ssl.CERT_NONE
-# Impose minimum TLS version
-## In 3.7 and above, this is easy...
-if sys.version_info.minor >= 7:
-    context.minimum_version = ssl.TLSVersion.TLSv1_2
-## Otherwise, it seems very hard...
-## The below is less strict than it ought to be, but trying to disable
-## TLS v1.1 here using ssl.OP_NO_TLSv1_1 produces unexpected failures
-## with recent versions of OpenSSL.  What a mess...
-else:
-    context.options |= ssl.OP_NO_SSLv3
-    context.options |= ssl.OP_NO_SSLv2
-# Try to enforce sensible ciphers
-try:
-    context.set_ciphers("AES+DHE:AES+ECDHE:CHACHA20+DHE:CHACHA20+ECDHE:!SHA1:@STRENGTH")
-except ssl.SSLError:
-    # Rely on the server to only support sensible things, I guess...
-    pass
-
 def fix_ipv6_url(url):
     if not url.count(":") > 2: # Best way to detect them?
         return url
@@ -219,7 +197,9 @@ class GeminiClient(cmd.Cmd):
 
     def __init__(self, restricted=False):
         cmd.Cmd.__init__(self)
-        self.prompt = "\x1b[38;5;202m" + "AV-98" + "\x1b[38;5;255m" + "> " + "\x1b[0m"
+        self.no_cert_prompt = "\x1b[38;5;202m" + "AV-98" + "\x1b[38;5;255m" + "> " + "\x1b[0m"
+        self.cert_prompt = "\x1b[38;5;202m" + "AV-98 (active cert!)" + "\x1b[38;5;255m" + "> " + "\x1b[0m"
+        self.prompt = self.no_cert_prompt
         self.gi = None
         self.history = []
         self.hist_index = 0
@@ -243,6 +223,8 @@ class GeminiClient(cmd.Cmd):
             "gopher_proxy" : "localhost:1965",
             "width" : 80,
             "auto_follow_redirects" : True,
+            "client_certfile" : None,
+            "client_keyfile" : None,
         }
 
         self.log = {
@@ -428,7 +410,37 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             # For Gopher requests, use the configured proxy
             host, port = self.options["gopher_proxy"].rsplit(":", 1)
             self._debug("Using gopher proxy: " + self.options["gopher_proxy"])
+
+        # Do DNS resolution
         addresses = self._get_addresses(host, port)
+
+        # Prepare TLS context
+        protocol = ssl.PROTOCOL_TLS if sys.version_info.minor >=6 else ssl.PROTOCOL_TLSv1_2
+        context = ssl.SSLContext(protocol)
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+        # Impose minimum TLS version
+        ## In 3.7 and above, this is easy...
+        if sys.version_info.minor >= 7:
+            context.minimum_version = ssl.TLSVersion.TLSv1_2
+        ## Otherwise, it seems very hard...
+        ## The below is less strict than it ought to be, but trying to disable
+        ## TLS v1.1 here using ssl.OP_NO_TLSv1_1 produces unexpected failures
+        ## with recent versions of OpenSSL.  What a mess...
+        else:
+            context.options |= ssl.OP_NO_SSLv3
+            context.options |= ssl.OP_NO_SSLv2
+        # Try to enforce sensible ciphers
+        try:
+            context.set_ciphers("AES+DHE:AES+ECDHE:CHACHA20+DHE:CHACHA20+ECDHE:!SHA1:@STRENGTH")
+        except ssl.SSLError:
+            # Rely on the server to only support sensible things, I guess...
+            pass
+        # Load client certificate if needed
+        if self.options["client_certfile"]:
+            context.load_cert_chain(self.options["client_certfile"],
+                    self.options["client_keyfile"])
+
         # Connect to remote host by any address possible
         err = None
         for address in addresses:
@@ -656,6 +668,25 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                 except ValueError:
                     pass
             self.options[option] = value
+
+    @restricted
+    def do_cert(self, line):
+        """Set or clear a client certificate"""
+        if self.options["client_certfile"]:
+            print("Deactivating client certificate.")
+            self.options["client_certfile"] = None
+            self.options["client_keyfile"] = None
+            self.prompt = self.no_cert_prompt
+        else:
+            print("Loading client certificate file, in PEM format (blank line to cancel)")
+            certfile = input("Certfile path: ")
+            print("Loading private key file, in PEM format (blank line to cancel)")
+            keyfile = input("Keyfile path: ")
+            self.options["client_certfile"] = certfile
+            self.options["client_keyfile"] = keyfile
+            self.prompt = self.cert_prompt
+
+
 
     @restricted
     def do_handler(self, line):
@@ -1076,7 +1107,9 @@ def main():
     # Act on args
     if args.tls_cert:
         # If tls_key is None, python will attempt to load the key from tls_cert.
-        context.load_cert_chain(args.tls_cert, args.tls_key)
+        gc.options["client_certfile"] = args.tls_cert
+        gc.options["client_keyfile"] = args.tls_key
+        gc.prompt = gc.cert_prompt
     if args.bookmarks:
         gc.cmdqueue.append("bookmarks")
     elif args.url:
