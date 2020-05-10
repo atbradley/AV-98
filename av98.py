@@ -31,6 +31,8 @@ import sys
 import time
 import webbrowser
 
+_VERSION = "0.0.1"
+
 _MAX_REDIRECTS = 5
 
 # Command abbreviations
@@ -872,6 +874,10 @@ Think of it like marks in vi: 'mark a'='ma' and 'go a'=''a'."""
         else:
             print("Invalid mark, must be one letter")
 
+    def do_version(self, line):
+        """Display version information."""
+        print("AV-98 " + _VERSION)
+
     ### Stuff that modifies the lookup table
     def do_ls(self, line):
         """List contents of current index.
@@ -1118,9 +1124,16 @@ def main():
     parser.add_argument('--tls-cert', metavar='FILE', help='TLS client certificate file')
     parser.add_argument('--tls-key', metavar='FILE', help='TLS client certificate private key file')
     parser.add_argument('--restricted', action="store_true", help='Disallow shell, add, and save commands')
+    parser.add_argument('--version', action='store_true',
+                        help='display version information and quit')
     parser.add_argument('url', metavar='URL', nargs='*',
                         help='start with this URL')
     args = parser.parse_args()
+
+    # Handle --version
+    if args.version:
+        print("AV-98 " + _VERSION)
+        sys.exit()
 
     # Instantiate client
     gc = GeminiClient(args.restricted)
