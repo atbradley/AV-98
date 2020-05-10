@@ -715,9 +715,21 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             self._deactivate_client_cert()
         else:
             print("Loading client certificate file, in PEM format (blank line to cancel)")
-            certfile = input("Certfile path: ")
+            certfile = input("Certfile path: ").strip()
+            if not certfile:
+                print("Aborting.")
+                return
+            elif not os.path.exists(certfile):
+                print("Certificate file {} does not exist.".format(certfile))
+                return
             print("Loading private key file, in PEM format (blank line to cancel)")
-            keyfile = input("Keyfile path: ")
+            keyfile = input("Keyfile path: ").strip()
+            if not keyfile:
+                print("Aborting.")
+                return
+            elif not os.path.exists(keyfile):
+                print("Private key file {} does not exist.".format(keyfile))
+                return
             self._activate_client_cert(certfile, keyfile)
 
     @restricted
