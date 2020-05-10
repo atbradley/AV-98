@@ -1085,17 +1085,17 @@ Use 'ls -l' to see URLs."""
     @needs_gi
     def do_add(self, line):
         """Add the current URL to the bookmarks menu.
-Bookmarks are stored in the ~/.av98-bookmarks.txt file.
+Bookmarks are stored in the ~/.av98/bookmarks.txt file.
 Optionally, specify the new name for the bookmark."""
-        with open(os.path.expanduser("~/.av98-bookmarks.txt"), "a") as fp:
+        with open(os.path.expanduser("~/.av98/bookmarks.txt"), "a") as fp:
             fp.write(self.gi.to_map_line(line))
 
     def do_bookmarks(self, line):
         """Show or access the bookmarks menu.
 'bookmarks' shows all bookmarks.
 'bookmarks n' navigates immediately to item n in the bookmark menu.
-Bookmarks are stored in the ~/.av98-bookmarks.txt file using the 'add' command."""
-        bm_file = os.path.expanduser("~/.av98-bookmarks.txt")
+Bookmarks are stored in the ~/.av98/bookmarks.txt file using the 'add' command."""
+        bm_file = os.path.expanduser("~/.av98/bookmarks.txt")
         if not os.path.exists(bm_file):
             print("You need to 'add' some bookmarks, first!")
             return
@@ -1169,7 +1169,7 @@ current gemini browsing session."""
 
 # Config file finder
 def get_rcfile():
-    rc_paths = ("~/.config/av98/av98rc", "~/.config/.av98rc", "~/.av98rc")
+    rc_paths = ("~/.config/av98/av98rc", "~/.av98/av98rc")
     for rc_path in rc_paths:
         rcfile = os.path.expanduser(rc_path)
         if os.path.exists(rcfile):
