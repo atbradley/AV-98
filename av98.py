@@ -364,8 +364,21 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             return
         # Client cert
         elif status.startswith("6"):
-            print("The site {} is requesting a client certificate.".format(gi.host))
-            print("This will allow the site to recognise you across requests.")
+            # We don't do transient certs yet
+            if status == "61":
+                print("Transient client certificates not yet supported.")
+                return
+
+            # Present different messages for different 6x statuses, but
+            # handle them the same.
+            if status in ("64", "65"):
+                print("The server rejected your certificate because it is either expired or not yet valid.")
+            elif status == "63":
+                print("The server did not accept your certificate.")
+                print("You may need to e.g. coordinate with the admin to get your certificate fingerprint whitelisted.")
+            else:
+                print("The site {} is requesting a client certificate.".format(gi.host))
+                print("This will allow the site to recognise you across requests.")
             print("What do you want to do?")
             print("1. Give up.")
             print("2. Load client certificate from file and retry the request.")
