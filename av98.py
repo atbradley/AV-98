@@ -216,6 +216,10 @@ class GeminiClient(cmd.Cmd):
         self.visited_hosts = set()
         self.waypoints = []
 
+        self.client_certs = {
+            "active": None
+        }
+
         self.options = {
             "debug" : False,
             "ipv6" : True,
@@ -223,8 +227,6 @@ class GeminiClient(cmd.Cmd):
             "gopher_proxy" : "localhost:1965",
             "width" : 80,
             "auto_follow_redirects" : True,
-            "client_certfile" : None,
-            "client_keyfile" : None,
         }
 
         self.log = {
@@ -437,9 +439,9 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             # Rely on the server to only support sensible things, I guess...
             pass
         # Load client certificate if needed
-        if self.options["client_certfile"]:
-            context.load_cert_chain(self.options["client_certfile"],
-                    self.options["client_keyfile"])
+        if self.client_certs["active"]:
+            certfile, keyfile = self.client_certs["active"]
+            context.load_cert_chain(certfile, keyfile)
 
         # Connect to remote host by any address possible
         err = None
@@ -672,21 +674,17 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
     @restricted
     def do_cert(self, line):
         """Set or clear a client certificate"""
-        if self.options["client_certfile"]:
+        if self.client_certs["active"]:
             print("Deactivating client certificate.")
-            self.options["client_certfile"] = None
-            self.options["client_keyfile"] = None
+            self.client_certs["active"] = None
             self.prompt = self.no_cert_prompt
         else:
             print("Loading client certificate file, in PEM format (blank line to cancel)")
             certfile = input("Certfile path: ")
             print("Loading private key file, in PEM format (blank line to cancel)")
             keyfile = input("Keyfile path: ")
-            self.options["client_certfile"] = certfile
-            self.options["client_keyfile"] = keyfile
+            self.client_certs["active"] = (certfile, keyfile)
             self.prompt = self.cert_prompt
-
-
 
     @restricted
     def do_handler(self, line):
@@ -1107,8 +1105,7 @@ def main():
     # Act on args
     if args.tls_cert:
         # If tls_key is None, python will attempt to load the key from tls_cert.
-        gc.options["client_certfile"] = args.tls_cert
-        gc.options["client_keyfile"] = args.tls_key
+        gc.client_certs["active"] = (args.tls_cert, args.tls_key)
         gc.prompt = gc.cert_prompt
     if args.bookmarks:
         gc.cmdqueue.append("bookmarks")
