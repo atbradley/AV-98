@@ -24,12 +24,16 @@ import socket
 import subprocess
 import sys
 import tempfile
-import textwrap
 import urllib.parse
 import ssl
 import sys
 import time
 import webbrowser
+
+try:
+    import ansiwrap as textwrap
+except ModuleNotFoundError:
+    import textwrap
 
 _VERSION = "0.0.1"
 
