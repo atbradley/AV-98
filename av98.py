@@ -204,6 +204,22 @@ class GeminiClient(cmd.Cmd):
 
     def __init__(self, restricted=False):
         cmd.Cmd.__init__(self)
+
+        # Find config directory
+        ## Look for something pre-existing
+        for confdir in ("~/.av98/", "~/.config/av98/"):
+            confdir = os.path.expanduser(confdir)
+            if os.path.exists(confdir):
+                self.config_dir = confdir
+                break
+        ## Otherwise, make one in .config if it exists
+        else:
+            if os.path.exists(os.path.expanduser("~/.config/")):
+                self.config_dir = os.path.expanduser("~/.config/av98/")
+            else:
+                self.config_dir = os.path.expanduser("~/.av98/")
+            return rcfile
+
         self.no_cert_prompt = "\x1b[38;5;76m" + "AV-98" + "\x1b[38;5;255m" + "> " + "\x1b[0m"
         self.cert_prompt = "\x1b[38;5;202m" + "AV-98" + "\x1b[38;5;255m" + "+cert> " + "\x1b[0m"
         self.prompt = self.no_cert_prompt
@@ -269,15 +285,32 @@ class GeminiClient(cmd.Cmd):
             new_gi = GeminiItem(self.permanent_redirects[gi.url], name=gi.name)
             self._go_to_gi(new_gi)
             return
+
         # Be careful with client certificates
         if self.active_cert_domains and gi.host not in self.active_cert_domains:
-            print("PRIVACY ALERT: Deactivate client cert before connecting to a new domain?")
-            resp = input("Y/N? ")
-            if resp.strip().lower() in ("n", "no"):
-                print("Keeping certificate active for {}".format(gi.host))
+            if self.active_is_transient:
+                print("Permanently delete currently active transient certificate?")
+                resp = input("Y/N? ")
+                if resp.strip().lower() in ("y", "yes"):
+                    print("Destroying certificate.")
+                    #for filename in self.client_certs["active"]:
+                        # permadelete(filename)
+                        # TODO - kill 'em on exit, too!
+                    for domain in self.active_cert_domains:
+                        self.client_certs.pop(domain)
+                    self._deactivate_client_cert()
+                else:
+                    print("Staying here.")
+
             else:
-                print("Deactivating certificate.")
-                self._deactivate_client_cert()
+                print("PRIVACY ALERT: Deactivate client cert before connecting to a new domain?")
+                resp = input("Y/N? ")
+                if resp.strip().lower() in ("n", "no"):
+                    print("Keeping certificate active for {}".format(gi.host))
+                else:
+                    print("Deactivating certificate.")
+                    self._deactivate_client_cert()
+
         # Suggest reactivating previous certs
         if not self.client_certs["active"] and gi.host in self.client_certs:
             print("PRIVACY ALERT: Reactivate previously used client cert for {}?".format(gi.host))
@@ -1085,17 +1118,16 @@ Use 'ls -l' to see URLs."""
     @needs_gi
     def do_add(self, line):
         """Add the current URL to the bookmarks menu.
-Bookmarks are stored in the ~/.av98/bookmarks.txt file.
 Optionally, specify the new name for the bookmark."""
-        with open(os.path.expanduser("~/.av98/bookmarks.txt"), "a") as fp:
+        with open(os.path.join(self.config_dir, "bookmarks.txt"), "a") as fp:
             fp.write(self.gi.to_map_line(line))
 
     def do_bookmarks(self, line):
         """Show or access the bookmarks menu.
 'bookmarks' shows all bookmarks.
 'bookmarks n' navigates immediately to item n in the bookmark menu.
-Bookmarks are stored in the ~/.av98/bookmarks.txt file using the 'add' command."""
-        bm_file = os.path.expanduser("~/.av98/bookmarks.txt")
+Bookmarks are stored using the 'add' command."""
+        bm_file = os.path.join(self.config_dir, "bookmarks.txt")
         if not os.path.exists(bm_file):
             print("You need to 'add' some bookmarks, first!")
             return
@@ -1167,15 +1199,6 @@ current gemini browsing session."""
 
     do_exit = do_quit
 
-# Config file finder
-def get_rcfile():
-    rc_paths = ("~/.config/av98/av98rc", "~/.av98/av98rc")
-    for rc_path in rc_paths:
-        rcfile = os.path.expanduser(rc_path)
-        if os.path.exists(rcfile):
-            return rcfile
-    return None
-
 # Main function
 def main():
 
@@ -1201,8 +1224,8 @@ def main():
     gc = GeminiClient(args.restricted)
 
     # Process config file
-    rcfile = get_rcfile()
-    if rcfile:
+    rcfile = os.path.join(gc.config_dir, "av98rc")
+    if os.path.exists(rcfile):
         print("Using config %s" % rcfile)
         with open(rcfile, "r") as fp:
             for line in fp:
