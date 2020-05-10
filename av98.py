@@ -1135,7 +1135,7 @@ current gemini browsing session."""
         ipv4_hosts = len([host for host in self.visited_hosts if host[0] == socket.AF_INET])
         ipv6_hosts = len([host for host in self.visited_hosts if host[0] == socket.AF_INET6])
         # Assemble lines
-        lines.append(("Flight duration", "%02d:%02d:%02d" % (hours, minutes, seconds)))
+        lines.append(("Patrol duration", "%02d:%02d:%02d" % (hours, minutes, seconds)))
         lines.append(("Requests sent:", self.log["requests"]))
         lines.append(("   IPv4 requests:", self.log["ipv4_requests"]))
         lines.append(("   IPv6 requests:", self.log["ipv6_requests"]))
