@@ -270,9 +270,7 @@ class GeminiClient(cmd.Cmd):
                 print("Keeping certificate active for {}".format(gi.host))
             else:
                 print("Deactivating certificate.")
-                self.client_certs["active"] = None
-                self.active_cert_domains = []
-                self.prompt = self.no_cert_prompt
+                self._deactivate_client_cert()
         # Do everything which touches the network in one block,
         # so we only need to catch exceptions once
         try:
@@ -612,6 +610,11 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         debug_text = "\x1b[0;32m[DEBUG] " + debug_text + "\x1b[0m"
         print(debug_text)
 
+    def _deactivate_client_cert(self):
+        self.client_certs["active"] = None
+        self.active_cert_domains = []
+        self.prompt = self.no_cert_prompt
+
     # Cmd implementation follows
 
     def default(self, line):
@@ -693,9 +696,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         """Set or clear a client certificate"""
         if self.client_certs["active"]:
             print("Deactivating client certificate.")
-            self.client_certs["active"] = None
-            self.active_cert_domains = []
-            self.prompt = self.no_cert_prompt
+            self._deactivate_client_cert()
         else:
             print("Loading client certificate file, in PEM format (blank line to cancel)")
             certfile = input("Certfile path: ")
