@@ -16,6 +16,7 @@ import collections
 import fnmatch
 import io
 import mimetypes
+import os
 import os.path
 import random
 import shlex
@@ -374,7 +375,8 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                 self._load_client_cert()
                 self._go_to_gi(gi, update_hist, handle)
             elif choice == "3":
-                print("Sorry, client generation not supported yet.")
+                self._generate_client_cert()
+                self._go_to_gi(gi, update_hist, handle)
             else:
                 print("Giving up.")
             return
@@ -658,6 +660,21 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             return
         self._activate_client_cert(certfile, keyfile)
 
+    def _generate_client_cert(self):
+        print("What do you want to name this new certificate?")
+        print("Answering `mycert` will create `~/.av98/certs/mycert.crt` and `~/.av98/certs/mycert.key`")
+        name = input()
+        if not name.strip():
+            print("Aborting.")
+            return
+        certdir = os.path.expanduser("~/.av98/certs")
+        if not os.path.exists(certdir):
+            os.makedirs(certdir)
+        certfile = os.path.join(certdir, name+".crt")
+        keyfile = os.path.join(certdir, name+".key")
+        os.system("openssl req -x509 -newkey rsa:2048 -days 365 -nodes -keyout {} -out {}".format(keyfile, certfile))
+        self._activate_client_cert(certfile, keyfile)
+
     def _activate_client_cert(self, certfile, keyfile):
         self.client_certs["active"] = (certfile, keyfile)
         self.active_cert_domains = []
@@ -762,7 +779,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         elif choice == "2":
             self._load_client_cert()
         elif choice == "3":
-            print("Sorry, client generation not supported yet.")
+            self._generate_client_cert()
         else:
             print("Aborting.")
 
