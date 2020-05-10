@@ -271,6 +271,16 @@ class GeminiClient(cmd.Cmd):
             else:
                 print("Deactivating certificate.")
                 self._deactivate_client_cert()
+        # Suggest reactivating previous certs
+        if not self.client_certs["active"] and gi.host in self.client_certs:
+            print("PRIVACY ALERT: Reactivate previously used client cert for {}?".format(gi.host))
+            resp = input("Y/N? ")
+            if resp.strip().lower() in ("y", "yes"):
+                self._activate_client_cert(self.client_certs[gi.host])
+            else:
+                print("Remaining unidentified.")
+                self.client_certs.pop(gi.host)
+
         # Do everything which touches the network in one block,
         # so we only need to catch exceptions once
         try:
