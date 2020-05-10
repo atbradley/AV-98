@@ -266,7 +266,7 @@ class GeminiClient(cmd.Cmd):
         if self.active_cert_domains and gi.host not in self.active_cert_domains:
             print("PRIVACY ALERT: Deactivate client cert before connecting to a new domain?")
             resp = input("Y/N? ")
-            if resp.lower in ("n", "no"):
+            if resp.strip().lower() in ("n", "no"):
                 print("Keeping certificate active for {}".format(gi.host))
             else:
                 print("Deactivating certificate.")
