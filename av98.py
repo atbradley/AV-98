@@ -363,7 +363,20 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             return
         # Client cert
         elif status.startswith("6"):
-            print("Client certificates not supported.")
+            print("The site {} is requesting a client certificate.".format(gi.host))
+            print("This will allow the site to recognise you across requests.")
+            print("What do you want to do?")
+            print("1. Give up.")
+            print("2. Load client certificate from file and retry the request.")
+            print("3. Generate new certificate and retry the request.")
+            choice = input("> ").strip()
+            if choice == "2":
+                self._load_client_cert()
+                self._go_to_gi(gi, update_hist, handle)
+            elif choice == "3":
+                print("Sorry, client generation not supported yet.")
+            else:
+                print("Giving up.")
             return
         # Invalid status
         elif not status.startswith("2"):
@@ -626,6 +639,25 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         debug_text = "\x1b[0;32m[DEBUG] " + debug_text + "\x1b[0m"
         print(debug_text)
 
+    def _load_client_cert(self):
+        print("Loading client certificate file, in PEM format (blank line to cancel)")
+        certfile = input("Certfile path: ").strip()
+        if not certfile:
+            print("Aborting.")
+            return
+        elif not os.path.exists(certfile):
+            print("Certificate file {} does not exist.".format(certfile))
+            return
+        print("Loading private key file, in PEM format (blank line to cancel)")
+        keyfile = input("Keyfile path: ").strip()
+        if not keyfile:
+            print("Aborting.")
+            return
+        elif not os.path.exists(keyfile):
+            print("Private key file {} does not exist.".format(keyfile))
+            return
+        self._activate_client_cert(certfile, keyfile)
+
     def _activate_client_cert(self, certfile, keyfile):
         self.client_certs["active"] = (certfile, keyfile)
         self.active_cert_domains = []
@@ -716,27 +748,23 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
     @restricted
     def do_cert(self, line):
         """Set or clear a client certificate"""
+        print("Managing client certificates")
         if self.client_certs["active"]:
+            print("Active certificate: {}".format(self.client_certs["active"][0]))
+        print("1. Deactivate client certificate.")
+        print("2. Load client certificate from file.")
+        print("3. Generate new certificate.")
+        print("Enter blank line to exit certificate manager.")
+        choice = input("> ").strip()
+        if choice == "1":
             print("Deactivating client certificate.")
             self._deactivate_client_cert()
+        elif choice == "2":
+            self._load_client_cert()
+        elif choice == "3":
+            print("Sorry, client generation not supported yet.")
         else:
-            print("Loading client certificate file, in PEM format (blank line to cancel)")
-            certfile = input("Certfile path: ").strip()
-            if not certfile:
-                print("Aborting.")
-                return
-            elif not os.path.exists(certfile):
-                print("Certificate file {} does not exist.".format(certfile))
-                return
-            print("Loading private key file, in PEM format (blank line to cancel)")
-            keyfile = input("Keyfile path: ").strip()
-            if not keyfile:
-                print("Aborting.")
-                return
-            elif not os.path.exists(keyfile):
-                print("Private key file {} does not exist.".format(keyfile))
-                return
-            self._activate_client_cert(certfile, keyfile)
+            print("Aborting.")
 
     @restricted
     def do_handler(self, line):
