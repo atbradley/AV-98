@@ -610,6 +610,12 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         debug_text = "\x1b[0;32m[DEBUG] " + debug_text + "\x1b[0m"
         print(debug_text)
 
+    def _activate_client_cert(self, certfile, keyfile):
+        self.client_certs["active"] = (certfile, keyfile)
+        self.active_cert_domains = []
+        self.prompt = self.cert_prompt
+        self._debug("Using ID {} / {}.".format(*self.client_certs["active"]))
+
     def _deactivate_client_cert(self):
         self.client_certs["active"] = None
         self.active_cert_domains = []
@@ -702,9 +708,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             certfile = input("Certfile path: ")
             print("Loading private key file, in PEM format (blank line to cancel)")
             keyfile = input("Keyfile path: ")
-            self.client_certs["active"] = (certfile, keyfile)
-            self.active_cert_domains = []
-            self.prompt = self.cert_prompt
+            self._activate_client_cert(certfile, keyfile)
 
     @restricted
     def do_handler(self, line):
@@ -1125,8 +1129,7 @@ def main():
     # Act on args
     if args.tls_cert:
         # If tls_key is None, python will attempt to load the key from tls_cert.
-        gc.client_certs["active"] = (args.tls_cert, args.tls_key)
-        gc.prompt = gc.cert_prompt
+        self._activate_client_cert(args.tls_cert, args.tls_key)
     if args.bookmarks:
         gc.cmdqueue.append("bookmarks")
     elif args.url:
