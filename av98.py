@@ -14,6 +14,7 @@ import cgi
 import codecs
 import collections
 import fnmatch
+import glob
 import io
 import mimetypes
 import os
@@ -421,14 +422,18 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                 print("This will allow the site to recognise you across requests.")
             print("What do you want to do?")
             print("1. Give up.")
-            print("2. Load client certificate from file and retry the request.")
-            print("3. Generate new certificate and retry the request.")
+            print("2. Generate new certificate and retry the request.")
+            print("3. Load previously generated certificate from file.")
+            print("4. Load certificate from file and retry the request.")
             choice = input("> ").strip()
             if choice == "2":
-                self._load_client_cert()
+                self._generate_persistent_client_cert()
                 self._go_to_gi(gi, update_hist, handle)
             elif choice == "3":
-                self._generate_persistent_client_cert()
+                self._choose_client_cert()
+                self._go_to_gi(gi, update_hist, handle)
+            elif choice == "4":
+                self._load_client_cert()
                 self._go_to_gi(gi, update_hist, handle)
             else:
                 print("Giving up.")
@@ -752,6 +757,20 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         os.system(cmd)
         self._activate_client_cert(certfile, keyfile)
 
+    def _choose_client_cert(self):
+        certdir = os.path.join(self.config_dir, "certs")
+        certs = glob.glob(os.path.join(certdir, "*.crt"))
+        certdir = {}
+        for n, cert in enumerate(certs):
+            certdir[str(n+1)] = (cert, os.path.splitext(cert)[0] + ".key")
+            print("{}. {}".format(n+1, os.path.splitext(os.path.basename(cert))[0]))
+        choice = input("> ").strip()
+        if choice in certdir:
+            certfile, keyfile = certdir[choice]
+            self._activate_client_cert(certfile, keyfile)
+        else:
+            print("What?")
+
     def _activate_client_cert(self, certfile, keyfile):
         self.client_certs["active"] = (certfile, keyfile)
         self.active_cert_domains = []
@@ -852,17 +871,20 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         if self.client_certs["active"]:
             print("Active certificate: {}".format(self.client_certs["active"][0]))
         print("1. Deactivate client certificate.")
-        print("2. Load client certificate from file.")
-        print("3. Generate new certificate.")
+        print("2. Generate new certificate.")
+        print("3. Load previously generated certificate.")
+        print("4. Load client certificate from file.")
         print("Enter blank line to exit certificate manager.")
         choice = input("> ").strip()
         if choice == "1":
             print("Deactivating client certificate.")
             self._deactivate_client_cert()
         elif choice == "2":
-            self._load_client_cert()
+            self._generate_persistent_client_cert()
         elif choice == "3":
-            self._generate_client_cert()
+            self._choose_client_cert()
+        elif choice == "4":
+            self._load_client_cert()
         else:
             print("Aborting.")
 
