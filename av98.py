@@ -374,7 +374,8 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         # Handle non-SUCCESS headers, which don't have a response body
         # Inputs
         if status.startswith("1"):
-            user_input = input(meta)
+            print(meta)
+            user_input = input("> ")
             self._go_to_gi(gi.query(user_input))
             return
         # Redirects
