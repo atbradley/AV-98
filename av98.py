@@ -132,6 +132,7 @@ class GeminiItem():
         return GeminiItem(self._derive_url(new_path))
 
     def query(self, query):
+        query = urllib.parse.quote(query)
         return GeminiItem(self._derive_url(query=query))
 
     def _derive_url(self, path="", query=""):
