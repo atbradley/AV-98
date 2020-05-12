@@ -404,6 +404,14 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             return
         # Client cert
         elif status.startswith("6"):
+            # Don't do client cert stuff in restricted mode, as in principle
+            # it could be used to fill up the disk by creating a whole lot of
+            # certificates
+            if self.restricted:
+                print("The server is requesting a client certificate.")
+                print("These are not supported in restricted mode, sorry.")
+                return
+
             # Transient certs are a special case
             if status == "61":
                 print("The server is asking to start a transient client certificate session.")
