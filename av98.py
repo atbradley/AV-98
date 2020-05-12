@@ -251,9 +251,9 @@ class GeminiClient(cmd.Cmd):
             "debug" : False,
             "ipv6" : True,
             "timeout" : 10,
-            "gopher_proxy" : "localhost:1965",
             "width" : 80,
             "auto_follow_redirects" : True,
+            "gopher_proxy" : None,
         }
 
         self.log = {
@@ -279,6 +279,12 @@ class GeminiClient(cmd.Cmd):
         # Don't try to speak to servers running other protocols
         if gi.scheme in ("http", "https"):
             webbrowser.open_new_tab(gi.url)
+            return
+        elif gi.scheme == "gopher" and not self.options.get("gopher_proxy", None):
+            print("""AV-98 does not speak Gopher natively.
+However, you can use `set gopher_proxy hostname:port` to tell it about a
+Gopher-to-Gemini proxy (such as a running Agena instance), in which case
+you'll be able to transparently follow links to Gopherspace!""")
             return
         elif gi.scheme not in ("gemini", "gopher"):
             print("Sorry, no support for " + gi.scheme)
