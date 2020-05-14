@@ -220,7 +220,6 @@ class GeminiClient(cmd.Cmd):
                 self.config_dir = os.path.expanduser("~/.config/av98/")
             else:
                 self.config_dir = os.path.expanduser("~/.av98/")
-            return rcfile
 
         self.no_cert_prompt = "\x1b[38;5;76m" + "AV-98" + "\x1b[38;5;255m" + "> " + "\x1b[0m"
         self.cert_prompt = "\x1b[38;5;202m" + "AV-98" + "\x1b[38;5;255m" + "+cert> " + "\x1b[0m"
