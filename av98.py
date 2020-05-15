@@ -1055,6 +1055,11 @@ Use 'ls -l' to see URLs."""
         self._show_lookup(url = "-l" in line)
         self.page_index = 0
 
+    def do_gus(self, line):
+        """Submit a search query to the GUS search engine."""
+        gus = GeminiItem("gemini://gus.guru/search")
+        self._go_to_gi(gus.query(line))
+
     def do_history(self, *args):
         """Display history."""
         self.lookup = self.history
