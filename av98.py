@@ -13,8 +13,10 @@ import cmd
 import cgi
 import codecs
 import collections
+import datetime
 import fnmatch
 import glob
+import hashlib
 import io
 import mimetypes
 import os
@@ -23,6 +25,7 @@ import random
 import shlex
 import shutil
 import socket
+import sqlite3
 import ssl
 import subprocess
 import sys
@@ -269,6 +272,18 @@ class GeminiClient(cmd.Cmd):
             "reset_connections": 0,
             "timeouts": 0,
         }
+
+        self._connect_to_tofu_db()
+
+    def _connect_to_tofu_db(self):
+
+        db_path = os.path.join(self.config_dir, "tofu.db")
+        self.db_conn = sqlite3.connect(db_path)
+        self.db_cur = self.db_conn.cursor()
+
+        self.db_cur.execute("""CREATE TABLE IF NOT EXISTS cert_cache
+            (hostname text, address text, fingerprint text,
+            first_seen date, last_seen date, count integer)""")
 
     def _go_to_gi(self, gi, update_hist=True, handle=True):
         """This method might be considered "the heart of AV-98".
@@ -595,6 +610,10 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             self._debug("Established {} connection.".format(s.version()))
         self._debug("Cipher is: {}.".format(s.cipher()))
 
+        # Do TOFU
+        cert = s.getpeercert(binary_form=True)
+        self._validate_cert(address[4][0], host, cert)
+
         # Remember that we showed the current cert to this domain...
         if self.client_certs["active"]:
             self.active_cert_domains.append(gi.host)
@@ -623,6 +642,57 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         addresses.sort(key=lambda add: add[0] == socket.AF_INET6, reverse=True)
 
         return addresses
+
+    def _validate_cert(self, address, host, cert):
+        sha = hashlib.sha256()
+        sha.update(cert)
+        fingerprint = sha.hexdigest()
+        now = datetime.datetime.now()
+
+        # Have we been here before?
+        self.db_cur.execute("""SELECT fingerprint, first_seen, last_seen, count
+            FROM cert_cache
+            WHERE hostname=? AND address=?""", (host, address))
+        cached_certs = self.db_cur.fetchall()
+
+        # If so, check for a match
+        if cached_certs:
+            max_count = 0
+            for cached_fingerprint, first, last, count in cached_certs:
+                if count > max_count:
+                    max_count = count
+                if fingerprint == cached_fingerprint:
+                    # Matched!
+                    self._debug("TOFU: Accepting previously seen ({} times) certificate {}".format(count, fingerprint))
+                    self.db_cur.execute("""UPDATE cert_cache
+                        SET last_seen=?, count=?
+                        WHERE hostname=? AND address=? AND fingerprint=?""",
+                        (now, count+1, host, address, fingerprint))
+                    break
+            else:
+                self._debug("TOFU: Unrecognised certificate {}!  Raising the alarm...".format(fingerprint))
+                print("****************************************")
+                print("[SECURITY WARNING] Unrecognised certificate!")
+                print("The certificate presented for {} ({}) has never been seen before.".format(host, address))
+                print("A different certificate has previously been seen {} times.".format(max_count))
+                print("This MIGHT be a Man-in-the-Middle attack.")
+                print("****************************************")
+                print("Attempt to verify the new certificate fingerprint out-of-band:")
+                print(fingerprint)
+                choice = input("Accept this new certificate? Y/N ").strip().lower()
+                if choice in ("y", "yes"):
+                    self.db_cur.execute("""INSERT INTO cert_cache
+                        VALUES (?, ?, ?, ?, ?, ?)""",
+                        (host, address, fingerprint, now, now, 1))
+                else:
+                    raise Exception("TOFU Failure!")
+
+        # If not, cache this cert
+        else:
+            self._debug("TOFU: Blindly trusting first ever certificate for this host!")
+            self.db_cur.execute("""INSERT INTO cert_cache
+                VALUES (?, ?, ?, ?, ?, ?)""",
+                (host, address, fingerprint, now, now, 1))
 
     def _get_handler_cmd(self, mimetype):
         # Now look for a handler for this mimetype
@@ -1272,6 +1342,9 @@ current gemini browsing session."""
     ### The end!
     def do_quit(self, *args):
         """Exit AV-98."""
+        # Close TOFU DB
+        self.db_conn.commit()
+        self.db_conn.close()
         # Clean up after ourself
         if self.tmp_filename:
             os.unlink(self.tmp_filename)
@@ -1282,7 +1355,6 @@ current gemini browsing session."""
                 certfile = os.path.join(self.config_dir, "transient_certs", cert+ext)
                 if os.path.exists(certfile):
                     os.remove(certfile)
-
         print()
         print("Thank you for flying AV-98!")
         sys.exit()
