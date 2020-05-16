@@ -334,9 +334,14 @@ you'll be able to transparently follow links to Gopherspace!""")
                 address, f = None, open(gi.path, "rb")
             else:
                 address, f = self._send_request(gi)
-            # Read response header
-            header = f.readline()
-            header = header.decode("UTF-8").strip()
+
+            # Spec dictates <META> should not exceed 1024 bytes
+            # but does not dictate a total maximum header length.
+            header = f.readline(2048)
+            header = header.decode("UTF-8")
+            if header[-1] != '\n':
+                raise RuntimeError("Received invalid header from server!")
+            header = header.strip()
             self._debug("Response header: %s." % header)
 
         # Catch network errors which may happen on initial connection
@@ -361,7 +366,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
 
         # Validate header
         status, meta = header.split(maxsplit=1)
-        if len(header) > 1024 or len(status) != 2 or not status.isnumeric():
+        if len(meta) > 1024 or len(status) != 2 or not status.isnumeric():
             print("ERROR: Received invalid header from server!")
             f.close()
             return
