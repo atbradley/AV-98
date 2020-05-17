@@ -25,6 +25,7 @@ import shutil
 import socket
 import sqlite3
 import ssl
+from ssl import CertificateError
 import subprocess
 import sys
 import tempfile
@@ -37,6 +38,14 @@ try:
     import ansiwrap as textwrap
 except ModuleNotFoundError:
     import textwrap
+
+try:
+    from cryptography import x509
+    from cryptography.hazmat.backends import default_backend
+    _HAS_CRYPTOGRAPHY = True
+    _BACKEND = default_backend()
+except ModuleNotFoundError:
+    _HAS_CRYPTOGRAPHY = False
 
 _VERSION = "0.0.1"
 
@@ -642,10 +651,28 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         return addresses
 
     def _validate_cert(self, address, host, cert):
+
+        now = datetime.datetime.now()
+        if _HAS_CRYPTOGRAPHY:
+            # Using the cryptography module we can get detailed access
+            # to the properties of even self-signed certs, unlike in
+            # the standard ssl library...
+            c = x509.load_der_x509_certificate(cert, _BACKEND)
+
+            # Check certificate validity dates
+            if c.not_valid_before >= now:
+                raise CertificateError("Certificate is not yet valid!")
+            elif c.not_valid_after <= now:
+                raise CertificateError("Certificate has expired!")
+
+            # Check certificate hostname
+            # TODO: Check alternative names too
+            common_name = c.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)[0].value
+            ssl._dnsname_match(common_name, host)
+
         sha = hashlib.sha256()
         sha.update(cert)
         fingerprint = sha.hexdigest()
-        now = datetime.datetime.now()
 
         # Have we been here before?
         self.db_cur.execute("""SELECT fingerprint, first_seen, last_seen, count
