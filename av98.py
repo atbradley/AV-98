@@ -822,7 +822,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
     def _generate_transient_cert_cert(self):
         certdir = os.path.join(self.config_dir, "transient_certs")
         name = str(uuid.uuid4())
-        self._generate_client_cert(certdir, name, prompt=False)
+        self._generate_client_cert(certdir, name, transient=True)
         self.active_is_transient = True
         self.transient_certs_created.append(name)
 
@@ -836,13 +836,13 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         certdir = os.path.join(self.config_dir, "certs")
         self._generate_client_cert(self, certdir, name)
 
-    def _generate_client_cert(self, certdir, basename, prompt=True):
+    def _generate_client_cert(self, certdir, basename, transient=False):
         if not os.path.exists(certdir):
             os.makedirs(certdir)
         certfile = os.path.join(certdir, basename+".crt")
         keyfile = os.path.join(certdir, basename+".key")
-        cmd = "openssl req -x509 -newkey rsa:2048 -days 365 -nodes -keyout {} -out {}".format(keyfile, certfile)
-        if not prompt:
+        cmd = "openssl req -x509 -newkey rsa:2048 -days {} -nodes -keyout {} -out {}".format(1 if transient else 365, keyfile, certfile)
+        if transient:
             cmd += " -subj='/CN={}'".format(basename)
         os.system(cmd)
         self._activate_client_cert(certfile, keyfile)
