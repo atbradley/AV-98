@@ -661,9 +661,9 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
 
             # Check certificate validity dates
             if c.not_valid_before >= now:
-                raise CertificateError("Certificate is not yet valid!")
+                raise CertificateError("Certificate not valid until: {}!".format(c.not_valid_before))
             elif c.not_valid_after <= now:
-                raise CertificateError("Certificate has expired!")
+                raise CertificateError("Certificate expired as of: {})!".format(c.not_valid_after))
 
             # Check certificate hostname
             # TODO: Check alternative names too
