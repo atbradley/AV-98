@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 # AV-98 Gemini client
-# (C) 2019 Solderpunk <solderpunk@sdf.org>
 # Dervied from VF-1 (https://github.com/solderpunk/VF-1),
-# which features contributions from:
-#  - Alex Schroeder <alex@gnu.org>
-#  - Joseph Lyman <tfurrows@sdf.org>
-#  - Adam Mayer (https://github.com/phooky)
-#  - Paco Estaban <paco@onna.be>
+# (C) 2019, 2020 Solderpunk <solderpunk@sdf.org>
+# With contributions from:
+#  - <vee@vnsf.xyz>
+#  - <jprjr@tilde.club>
 
 import argparse
 import cmd
