@@ -684,6 +684,9 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                         VALUES (?, ?, ?, ?, ?, ?)""",
                         (host, address, fingerprint, now, now, 1))
                     self.db_conn.commit()
+                    certdir = os.path.join(self.config_dir, "cert_cache")
+                    with open(os.path.join(certdir, fingerprint+".crt"), "wb") as fp:
+                        fp.write(cert)
                 else:
                     raise Exception("TOFU Failure!")
 
@@ -694,6 +697,11 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                 VALUES (?, ?, ?, ?, ?, ?)""",
                 (host, address, fingerprint, now, now, 1))
             self.db_conn.commit()
+            certdir = os.path.join(self.config_dir, "cert_cache")
+            if not os.path.exists(certdir):
+                os.makedirs(certdir)
+            with open(os.path.join(certdir, fingerprint+".crt"), "wb") as fp:
+                fp.write(cert)
 
     def _get_handler_cmd(self, mimetype):
         # Now look for a handler for this mimetype
@@ -834,7 +842,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         if not name.strip():
             print("Aborting.")
             return
-        certdir = os.path.join(self.config_dir, "certs")
+        certdir = os.path.join(self.config_dir, "client_certs")
         self._generate_client_cert(self, certdir, name)
 
     def _generate_client_cert(self, certdir, basename, transient=False):
@@ -849,7 +857,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         self._activate_client_cert(certfile, keyfile)
 
     def _choose_client_cert(self):
-        certdir = os.path.join(self.config_dir, "certs")
+        certdir = os.path.join(self.config_dir, "client_certs")
         certs = glob.glob(os.path.join(certdir, "*.crt"))
         certdir = {}
         for n, cert in enumerate(certs):
