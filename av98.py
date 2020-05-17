@@ -668,6 +668,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                         SET last_seen=?, count=?
                         WHERE hostname=? AND address=? AND fingerprint=?""",
                         (now, count+1, host, address, fingerprint))
+                    self.db_conn.commit()
                     break
             else:
                 self._debug("TOFU: Unrecognised certificate {}!  Raising the alarm...".format(fingerprint))
@@ -684,6 +685,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                     self.db_cur.execute("""INSERT INTO cert_cache
                         VALUES (?, ?, ?, ?, ?, ?)""",
                         (host, address, fingerprint, now, now, 1))
+                    self.db_conn.commit()
                 else:
                     raise Exception("TOFU Failure!")
 
@@ -693,6 +695,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             self.db_cur.execute("""INSERT INTO cert_cache
                 VALUES (?, ?, ?, ?, ?, ?)""",
                 (host, address, fingerprint, now, now, 1))
+            self.db_conn.commit()
 
     def _get_handler_cmd(self, mimetype):
         # Now look for a handler for this mimetype
