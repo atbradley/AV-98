@@ -264,6 +264,7 @@ class GeminiClient(cmd.Cmd):
             "width" : 80,
             "auto_follow_redirects" : True,
             "gopher_proxy" : None,
+            "tls_mode" : "tofu",
         }
 
         self.log = {
@@ -571,8 +572,14 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         # Prepare TLS context
         protocol = ssl.PROTOCOL_TLS if sys.version_info.minor >=6 else ssl.PROTOCOL_TLSv1_2
         context = ssl.SSLContext(protocol)
-        context.check_hostname = False
-        context.verify_mode = ssl.CERT_NONE
+        # Use CAs or TOFU
+        if self.options["tls_mode"] == "ca":
+            context.verify_mode = ssl.CERT_REQUIRED
+            context.check_hostname = True
+            context.load_default_certs()
+        else:
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
         # Impose minimum TLS version
         ## In 3.7 and above, this is easy...
         if sys.version_info.minor >= 7:
@@ -618,8 +625,9 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         self._debug("Cipher is: {}.".format(s.cipher()))
 
         # Do TOFU
-        cert = s.getpeercert(binary_form=True)
-        self._validate_cert(address[4][0], host, cert)
+        if self.options["tls_mode"] != "ca":
+            cert = s.getpeercert(binary_form=True)
+            self._validate_cert(address[4][0], host, cert)
 
         # Remember that we showed the current cert to this domain...
         if self.client_certs["active"]:
@@ -991,6 +999,10 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                     if not port.isnumeric():
                         print("Invalid proxy port %s" % port)
                         return
+            elif option == "tls_mode":
+                if value.lower() not in ("ca", "tofu"):
+                    print("TLS mode must be `ca` or `tofu`!")
+                    return
             elif value.isnumeric():
                 value = int(value)
             elif value.lower() == "false":
