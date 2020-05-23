@@ -1046,14 +1046,14 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
 
     @restricted
     def do_cert(self, line):
-        """Set or clear a client certificate"""
+        """Manage client certificates"""
         print("Managing client certificates")
         if self.client_certs["active"]:
             print("Active certificate: {}".format(self.client_certs["active"][0]))
         print("1. Deactivate client certificate.")
         print("2. Generate new certificate.")
         print("3. Load previously generated certificate.")
-        print("4. Load client certificate from file.")
+        print("4. Load externally created client certificate from file.")
         print("Enter blank line to exit certificate manager.")
         choice = input("> ").strip()
         if choice == "1":
