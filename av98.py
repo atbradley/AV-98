@@ -220,7 +220,7 @@ class GeminiClient(cmd.Cmd):
         # Set umask so that nothing we create can be read by anybody else.
         # The certificate cache and TOFU database contain "browser history"
         # type sensitivie information.
-        os.umask(077)
+        os.umask(0o077)
 
         # Find config directory
         ## Look for something pre-existing
