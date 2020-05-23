@@ -697,7 +697,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             names = set(names)
             for name in names:
                 try:
-                    ssl._dnsname_match(common_name, host)
+                    ssl._dnsname_match(name, host)
                     break
                 except CertificateError:
                     continue
