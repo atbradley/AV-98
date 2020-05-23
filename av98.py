@@ -706,9 +706,11 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         # If so, check for a match
         if cached_certs:
             max_count = 0
+            most_frequent_cert = None
             for cached_fingerprint, first, last, count in cached_certs:
                 if count > max_count:
                     max_count = count
+                    most_frequent_cert = cached_fingerprint
                 if fingerprint == cached_fingerprint:
                     # Matched!
                     self._debug("TOFU: Accepting previously seen ({} times) certificate {}".format(count, fingerprint))
@@ -719,12 +721,27 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                     self.db_conn.commit()
                     break
             else:
+                if _HAS_CRYPTOGRAPHY:
+                    # Load the most frequently seen certificate to see if it has
+                    # expired
+                    certdir = os.path.join(self.config_dir, "cert_cache")
+                    with open(os.path.join(certdir, most_frequent_cert+".crt"), "rb") as fp:
+                        previous_cert = fp.read()
+                    previous_cert = x509.load_der_x509_certificate(previous_cert, _BACKEND)
+                    previous_ttl = previous_cert.not_valid_after - now
+                    print(previous_ttl)
+
                 self._debug("TOFU: Unrecognised certificate {}!  Raising the alarm...".format(fingerprint))
                 print("****************************************")
                 print("[SECURITY WARNING] Unrecognised certificate!")
                 print("The certificate presented for {} ({}) has never been seen before.".format(host, address))
-                print("A different certificate has previously been seen {} times.".format(max_count))
                 print("This MIGHT be a Man-in-the-Middle attack.")
+                print("A different certificate has previously been seen {} times.".format(max_count))
+                if _HAS_CRYPTOGRAPHY:
+                    if previous_ttl < datetime.timedelta():
+                        print("That certificate has expired, which reduces suspicion somewhat.")
+                    else:
+                        print("That certificate is still valid for: {}".format(previous_ttl))
                 print("****************************************")
                 print("Attempt to verify the new certificate fingerprint out-of-band:")
                 print(fingerprint)
@@ -734,7 +751,6 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                         VALUES (?, ?, ?, ?, ?, ?)""",
                         (host, address, fingerprint, now, now, 1))
                     self.db_conn.commit()
-                    certdir = os.path.join(self.config_dir, "cert_cache")
                     with open(os.path.join(certdir, fingerprint+".crt"), "wb") as fp:
                         fp.write(cert)
                 else:
