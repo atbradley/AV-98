@@ -217,6 +217,11 @@ class GeminiClient(cmd.Cmd):
     def __init__(self, restricted=False):
         cmd.Cmd.__init__(self)
 
+        # Set umask so that nothing we create can be read by anybody else.
+        # The certificate cache and TOFU database contain "browser history"
+        # type sensitivie information.
+        os.umask(077)
+
         # Find config directory
         ## Look for something pre-existing
         for confdir in ("~/.av98/", "~/.config/av98/"):
