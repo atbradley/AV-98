@@ -413,6 +413,11 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                 print("Error: caught in redirect loop!")
             elif len(self.previous_redirectors) == _MAX_REDIRECTS:
                 print("Error: refusing to follow more than %d consecutive redirects!" % _MAX_REDIRECTS)
+            # Never follow cross-domain redirects without asking
+            elif new_gi.host != gi.host:
+                follow = input("Follow cross-domain redirect to %s? (y/n) " % new_gi.url)
+                if follow.strip().lower() not in ("y", "yes"):
+                    return
             elif not self.options["auto_follow_redirects"]:
                 follow = input("Follow redirect to %s? (y/n) " % new_gi.url)
                 if follow.strip().lower() not in ("y", "yes"):
