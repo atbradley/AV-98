@@ -235,6 +235,7 @@ class GeminiClient(cmd.Cmd):
                 self.config_dir = os.path.expanduser("~/.config/av98/")
             else:
                 self.config_dir = os.path.expanduser("~/.av98/")
+            print("Creating config directory {}".format(self.config_dir))
             os.makedirs(self.config_dir)
 
         self.no_cert_prompt = "\x1b[38;5;76m" + "AV-98" + "\x1b[38;5;255m" + "> " + "\x1b[0m"
