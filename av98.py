@@ -687,8 +687,9 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
 
             # Check certificate hostnames
             names = []
-            common_name = c.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)[0].value
-            names.append(common_name)
+            common_name = c.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)
+            if common_name:
+                names.append(common_name[0].value)
             try:
                 names.extend([alt.value for alt in c.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME).value])
             except x509.ExtensionNotFound:
