@@ -1088,6 +1088,15 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             if "%s" not in handler:
                 print("Are you sure you don't want to pass the filename to the handler?")
 
+    def do_abbrevs(self, *args):
+        """Print all AV-98 command abbreviations."""
+        header = "Command Abbreviations"
+        self.stdout.write("{}\n".format(str(header)))
+        if self.ruler:
+            self.stdout.write("{}\n".format(str(self.ruler * len(header))))
+        for k, v in _ABBREVS.items():
+            self.stdout.write("{:<7}  {}\n".format(k, v))
+
     ### Stuff for getting around
     def do_go(self, line):
         """Go to a gemini URL or marked item."""
