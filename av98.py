@@ -1502,7 +1502,7 @@ def main():
     # Act on args
     if args.tls_cert:
         # If tls_key is None, python will attempt to load the key from tls_cert.
-        self._activate_client_cert(args.tls_cert, args.tls_key)
+        gc._activate_client_cert(args.tls_cert, args.tls_key)
     if args.bookmarks:
         gc.cmdqueue.append("bookmarks")
     elif args.url:
