@@ -921,7 +921,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             print("Aborting.")
             return
         certdir = os.path.join(self.config_dir, "client_certs")
-        self._generate_client_cert(self, certdir, name)
+        self._generate_client_cert(certdir, name)
 
     def _generate_client_cert(self, certdir, basename, transient=False):
         if not os.path.exists(certdir):
