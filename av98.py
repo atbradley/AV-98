@@ -672,7 +672,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
 
     def _validate_cert(self, address, host, cert):
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         if _HAS_CRYPTOGRAPHY:
             # Using the cryptography module we can get detailed access
             # to the properties of even self-signed certs, unlike in
