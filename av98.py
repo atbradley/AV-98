@@ -605,7 +605,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             context.options |= ssl.OP_NO_SSLv2
         # Try to enforce sensible ciphers
         try:
-            context.set_ciphers("AES+DHE:AES+ECDHE:CHACHA20+DHE:CHACHA20+ECDHE:!SHA1:@STRENGTH")
+            context.set_ciphers("AESGCM+ECDHE:AESGCM+DHE:CHACHA20+ECDHE:CHACHA20+DHE:!DSS:!ECDSA:!SHA1:!MD5:@STRENGTH")
         except ssl.SSLError:
             # Rely on the server to only support sensible things, I guess...
             pass
