@@ -930,7 +930,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         keyfile = os.path.join(certdir, basename+".key")
         cmd = "openssl req -x509 -newkey rsa:2048 -days {} -nodes -keyout {} -out {}".format(1 if transient else 365, keyfile, certfile)
         if transient:
-            cmd += " -subj='/CN={}'".format(basename)
+            cmd += " -subj '/CN={}'".format(basename)
         os.system(cmd)
         self._activate_client_cert(certfile, keyfile)
 
