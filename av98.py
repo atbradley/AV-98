@@ -427,8 +427,12 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             # Never follow cross-protocol redirects without asking
             elif new_gi.scheme != gi.scheme:
                 follow = input("Follow cross-protocol redirect to %s? (y/n) " % new_gi.url)
+            # Don't follow *any* redirect without asking if auto-follow is off
             elif not self.options["auto_follow_redirects"]:
                 follow = input("Follow redirect to %s? (y/n) " % new_gi.url)
+            # Otherwise, follow away
+            else:
+                follow == "yes"
             if follow.strip().lower() not in ("y", "yes"):
                 return
             self._debug("Following redirect to %s." % new_gi.url)
