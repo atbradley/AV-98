@@ -369,7 +369,7 @@ you'll be able to transparently follow links to Gopherspace!""")
             # but does not dictate a total maximum header length.
             header = f.readline(2048)
             header = header.decode("UTF-8")
-            if header[-1] != '\n':
+            if not header or header[-1] != '\n':
                 raise RuntimeError("Received invalid header from server!")
             header = header.strip()
             self._debug("Response header: %s." % header)
