@@ -365,9 +365,9 @@ you'll be able to transparently follow links to Gopherspace!""")
             else:
                 address, f = self._send_request(gi)
 
-            # Spec dictates <META> should not exceed 1024 bytes
-            # but does not dictate a total maximum header length.
-            header = f.readline(2048)
+            # Spec dictates <META> should not exceed 1024 bytes,
+            # so maximum valid header length is 1027 bytes.
+            header = f.readline(1027)
             header = header.decode("UTF-8")
             if not header or header[-1] != '\n':
                 raise RuntimeError("Received invalid header from server!")
