@@ -432,7 +432,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                 follow = input("Follow redirect to %s? (y/n) " % new_gi.url)
             # Otherwise, follow away
             else:
-                follow == "yes"
+                follow = "yes"
             if follow.strip().lower() not in ("y", "yes"):
                 return
             self._debug("Following redirect to %s." % new_gi.url)
