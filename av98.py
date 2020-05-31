@@ -417,25 +417,27 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             new_gi = GeminiItem(gi.absolutise_url(meta))
             if new_gi.url in self.previous_redirectors:
                 print("Error: caught in redirect loop!")
+                return
             elif len(self.previous_redirectors) == _MAX_REDIRECTS:
                 print("Error: refusing to follow more than %d consecutive redirects!" % _MAX_REDIRECTS)
+                return
             # Never follow cross-domain redirects without asking
             elif new_gi.host != gi.host:
                 follow = input("Follow cross-domain redirect to %s? (y/n) " % new_gi.url)
-                if follow.strip().lower() not in ("y", "yes"):
-                    return
+            # Never follow cross-protocol redirects without asking
+            elif new_gi.scheme != gi.scheme:
+                follow = input("Follow cross-protocol redirect to %s? (y/n) " % new_gi.url)
             elif not self.options["auto_follow_redirects"]:
                 follow = input("Follow redirect to %s? (y/n) " % new_gi.url)
-                if follow.strip().lower() not in ("y", "yes"):
-                    return
-            else:
-                self._debug("Following redirect to %s." % new_gi.url)
-                self._debug("This is consecutive redirect number %d." % len(self.previous_redirectors))
-                self.previous_redirectors.add(gi.url)
-                if status == "31":
-                    # Permanent redirect
-                    self.permanent_redirects[gi.url] = new_gi.url
-                self._go_to_gi(new_gi)
+            if follow.strip().lower() not in ("y", "yes"):
+                return
+            self._debug("Following redirect to %s." % new_gi.url)
+            self._debug("This is consecutive redirect number %d." % len(self.previous_redirectors))
+            self.previous_redirectors.add(gi.url)
+            if status == "31":
+                # Permanent redirect
+                self.permanent_redirects[gi.url] = new_gi.url
+            self._go_to_gi(new_gi)
             return
         # Errors
         elif status.startswith("4") or status.startswith("5"):
