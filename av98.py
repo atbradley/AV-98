@@ -3,8 +3,9 @@
 # Dervied from VF-1 (https://github.com/solderpunk/VF-1),
 # (C) 2019, 2020 Solderpunk <solderpunk@sdf.org>
 # With contributions from:
-#  - <vee@vnsf.xyz>
+#  - danceka <hannu.hartikainen@gmail.com>
 #  - <jprjr@tilde.club>
+#  - <vee@vnsf.xyz>
 
 import argparse
 import cmd
