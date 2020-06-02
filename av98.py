@@ -86,6 +86,12 @@ _MIME_HANDLERS = {
     "text/gemini":          "cat %s",
 }
 
+# monkey-patch Gemini support in urllib.parse
+# see https://github.com/python/cpython/blob/master/Lib/urllib/parse.py
+urllib.parse.uses_relative.append("gemini")
+urllib.parse.uses_netloc.append("gemini")
+
+
 def fix_ipv6_url(url):
     if not url.count(":") > 2: # Best way to detect them?
         return url
@@ -159,17 +165,7 @@ class GeminiItem():
         Convert a relative URL to an absolute URL by using the URL of this
         GeminiItem as a base.
         """
-        # Absolutise URL, which annoyingly needs a valid scheme...
-        if self.url.startswith("gemini://"):
-            base_url = self.url.replace("gemini://", "https://")
-            was_gemini = True
-        else:
-            base_url = self.url
-            was_gemini = False
-        absolute = urllib.parse.urljoin(base_url, relative_url)
-        if absolute != relative_url and was_gemini:
-            absolute = absolute.replace("https://", "gemini://")
-        return absolute
+        return urllib.parse.urljoin(self.url, relative_url)
 
     def to_map_line(self, name=None):
         if name or self.name:
