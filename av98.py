@@ -679,7 +679,19 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         return addresses
 
     def _validate_cert(self, address, host, cert):
+        """
+        Validate a TLS certificate in TOFU mode.
 
+        If the cryptography module is installed:
+         - Check the certificate Common Name or SAN matches `host`
+         - Check the certificate's not valid before date is in the past
+         - Check the certificate's not valid after date is in the future
+
+        Whether the cryptography module is installed or not, check the
+        certificate's fingerprint against the TOFU database to see if we've
+        previously encountered a different certificate for this IP address and
+        hostname.
+        """
         now = datetime.datetime.utcnow()
         if _HAS_CRYPTOGRAPHY:
             # Using the cryptography module we can get detailed access
@@ -900,6 +912,10 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         print(debug_text)
 
     def _load_client_cert(self):
+        """
+        Interactively load a TLS client certificate from the filesystem in PEM
+        format.
+        """
         print("Loading client certificate file, in PEM format (blank line to cancel)")
         certfile = input("Certfile path: ").strip()
         if not certfile:
@@ -919,6 +935,10 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         self._activate_client_cert(certfile, keyfile)
 
     def _generate_transient_cert_cert(self):
+        """
+        Use `openssl` command to generate a new transient client certificate
+        with 24 hours of validity.
+        """
         certdir = os.path.join(self.config_dir, "transient_certs")
         name = str(uuid.uuid4())
         self._generate_client_cert(certdir, name, transient=True)
@@ -926,6 +946,10 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         self.transient_certs_created.append(name)
 
     def _generate_persistent_client_cert(self):
+        """
+        Interactively use `openssl` command to generate a new persistent client
+        certificate with one year of validity.
+        """
         print("What do you want to name this new certificate?")
         print("Answering `mycert` will create `~/.av98/certs/mycert.crt` and `~/.av98/certs/mycert.key`")
         name = input()
@@ -936,6 +960,11 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         self._generate_client_cert(certdir, name)
 
     def _generate_client_cert(self, certdir, basename, transient=False):
+        """
+        Use `openssl` binary to generate a client certificate (which may be
+        transient or persistent) and save the certificate and private key to the
+        specified directory with the specified basename.
+        """
         if not os.path.exists(certdir):
             os.makedirs(certdir)
         certfile = os.path.join(certdir, basename+".crt")
@@ -947,6 +976,10 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         self._activate_client_cert(certfile, keyfile)
 
     def _choose_client_cert(self):
+        """
+        Interactively select a previously generated client certificate and
+        activate it.
+        """
         certdir = os.path.join(self.config_dir, "client_certs")
         certs = glob.glob(os.path.join(certdir, "*.crt"))
         certdir = {}
