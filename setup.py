@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='AV-98',
-    version='0.0.1',
+    version='1.0.0',
     description="Command line Gemini client.",
     author="Solderpunk",
     author_email="solderpunk@sdf.org",
