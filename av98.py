@@ -827,6 +827,10 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                 line = line[1:].lstrip("\t ")
                 tmpf.write(textwrap.fill(line, self.options["width"],
                     initial_indent = "• ", subsequent_indent="  ") + "\n")
+            elif line.startswith(">"):
+                line = line[1:].lstrip("\t ")
+                tmpf.write(textwrap.fill(line, self.options["width"],
+                    initial_indent = "> ", subsequent_indent="> ") + "\n")
             elif line.startswith("###"):
                 line = line[3:].lstrip("\t ")
                 tmpf.write("\x1b[4m" + line + "\x1b[0m""\n")
