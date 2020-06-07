@@ -6,6 +6,7 @@
 #  - danceka <hannu.hartikainen@gmail.com>
 #  - <jprjr@tilde.club>
 #  - <vee@vnsf.xyz>
+#  - Klaus Alexander Seistrup <klaus@seistrup.dk>
 
 import argparse
 import cmd
@@ -823,17 +824,17 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                 except:
                     self._debug("Skipping possible link: %s" % line)
             elif line.startswith("*"):
-                line = line[1:].lstrip()
+                line = line[1:].lstrip("\t ")
                 tmpf.write(textwrap.fill(line, self.options["width"],
                     initial_indent = "• ", subsequent_indent="  ") + "\n")
             elif line.startswith("###"):
-                line = line[3:].lstrip()
+                line = line[3:].lstrip("\t ")
                 tmpf.write("\x1b[4m" + line + "\x1b[0m""\n")
             elif line.startswith("##"):
-                line = line[2:].lstrip()
+                line = line[2:].lstrip("\t ")
                 tmpf.write("\x1b[1m" + line + "\x1b[0m""\n")
             elif line.startswith("#"):
-                line = line[1:].lstrip()
+                line = line[1:].lstrip("\t ")
                 tmpf.write("\x1b[1m\x1b[4m" + line + "\x1b[0m""\n")
             else:
                 tmpf.write(textwrap.fill(line, self.options["width"]) + "\n")
