@@ -15,6 +15,7 @@ import codecs
 import collections
 import datetime
 import fnmatch
+import getpass
 import glob
 import hashlib
 import io
@@ -407,7 +408,10 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         # Inputs
         if status.startswith("1"):
             print(meta)
-            user_input = input("> ")
+            if status == "11":
+                user_input = getpass.getpass("> ")
+            else:
+                user_input = input("> ")
             self._go_to_gi(gi.query(user_input))
             return
         # Redirects
