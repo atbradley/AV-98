@@ -823,7 +823,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                     tmpf.write(self._format_geminiitem(len(self.index), gi) + "\n")
                 except:
                     self._debug("Skipping possible link: %s" % line)
-            elif line.startswith("*"):
+            elif line.startswith("* "):
                 line = line[1:].lstrip("\t ")
                 tmpf.write(textwrap.fill(line, self.options["width"],
                     initial_indent = "• ", subsequent_indent="  ") + "\n")
