@@ -535,7 +535,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
 
         # Save the result in a temporary file
         ## Delete old file
-        if self.tmp_filename:
+        if self.tmp_filename and os.path.exists(self.tmp_filename):
             os.unlink(self.tmp_filename)
         ## Set file mode
         if mime.startswith("text/"):
@@ -1491,9 +1491,9 @@ current gemini browsing session."""
         self.db_conn.commit()
         self.db_conn.close()
         # Clean up after ourself
-        if self.tmp_filename:
+        if self.tmp_filename and os.path.exists(self.tmp_filename):
             os.unlink(self.tmp_filename)
-        if self.idx_filename:
+        if self.idx_filename and os.path.exists(self.idx_filename):
             os.unlink(self.idx_filename)
         for cert in self.transient_certs_created:
             for ext in (".crt", ".key"):
