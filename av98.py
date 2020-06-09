@@ -120,8 +120,6 @@ def fix_ipv6_url(url):
 standard_ports = {
         "gemini": 1965,
         "gopher": 70,
-        "http": 80,
-        "https": 443,
 }
 
 class GeminiItem():
@@ -134,7 +132,7 @@ class GeminiItem():
         parsed = urllib.parse.urlparse(self.url)
         self.scheme = parsed.scheme
         self.host = parsed.hostname
-        self.port = parsed.port or standard_ports[self.scheme]
+        self.port = parsed.port or standard_ports.get(self.scheme, 0)
         self.path = parsed.path
 
     def root(self):
@@ -316,7 +314,7 @@ Gopher-to-Gemini proxy (such as a running Agena instance), in which case
 you'll be able to transparently follow links to Gopherspace!""")
             return
         elif gi.scheme not in ("gemini", "gopher"):
-            print("Sorry, no support for " + gi.scheme)
+            print("Sorry, no support for {} links.".format(gi.scheme))
             return
         # Obey permanent redirects
         if gi.url in self.permanent_redirects:
