@@ -50,7 +50,7 @@ try:
 except ModuleNotFoundError:
     _HAS_CRYPTOGRAPHY = False
 
-_VERSION = "1.0.1"
+_VERSION = "1.0.2dev"
 
 _MAX_REDIRECTS = 5
 
