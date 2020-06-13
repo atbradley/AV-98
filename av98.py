@@ -1133,12 +1133,13 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
 
     def do_abbrevs(self, *args):
         """Print all AV-98 command abbreviations."""
-        header = "Command Abbreviations"
-        self.stdout.write("{}\n".format(str(header)))
+        header = "Command Abbreviations:"
+        self.stdout.write("\n{}\n".format(str(header)))
         if self.ruler:
             self.stdout.write("{}\n".format(str(self.ruler * len(header))))
         for k, v in _ABBREVS.items():
             self.stdout.write("{:<7}  {}\n".format(k, v))
+        self.stdout.write("\n")
 
     ### Stuff for getting around
     def do_go(self, line):
