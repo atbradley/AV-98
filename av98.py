@@ -7,6 +7,7 @@
 #  - <jprjr@tilde.club>
 #  - <vee@vnsf.xyz>
 #  - Klaus Alexander Seistrup <klaus@seistrup.dk>
+#  - govynnus <govynnus@sdf.org>
 
 import argparse
 import cmd
@@ -915,11 +916,12 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         format.
         """
         print("Loading client certificate file, in PEM format (blank line to cancel)")
+        print("Do not use `~` to represent your home directory.")
         certfile = input("Certfile path: ").strip()
         if not certfile:
             print("Aborting.")
             return
-        elif not os.path.exists(certfile):
+        elif not os.path.isfile(certfile):
             print("Certificate file {} does not exist.".format(certfile))
             return
         print("Loading private key file, in PEM format (blank line to cancel)")
@@ -927,7 +929,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         if not keyfile:
             print("Aborting.")
             return
-        elif not os.path.exists(keyfile):
+        elif not os.path.isfile(keyfile):
             print("Private key file {} does not exist.".format(keyfile))
             return
         self._activate_client_cert(certfile, keyfile)
@@ -948,13 +950,13 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         Interactively use `openssl` command to generate a new persistent client
         certificate with one year of validity.
         """
+        certdir = os.path.join(self.config_dir, "client_certs")
         print("What do you want to name this new certificate?")
-        print("Answering `mycert` will create `~/.av98/certs/mycert.crt` and `~/.av98/certs/mycert.key`")
-        name = input()
+        print("Answering `mycert` will create `{0}/mycert.crt` and `{0}/mycert.key`".format(certdir))
+        name = input("> ")
         if not name.strip():
             print("Aborting.")
             return
-        certdir = os.path.join(self.config_dir, "client_certs")
         self._generate_client_cert(certdir, name)
 
     def _generate_client_cert(self, certdir, basename, transient=False):
@@ -980,6 +982,9 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         """
         certdir = os.path.join(self.config_dir, "client_certs")
         certs = glob.glob(os.path.join(certdir, "*.crt"))
+        if len(certs) == 0:
+            print("There are no previously generated certificates.")
+            return
         certdir = {}
         for n, cert in enumerate(certs):
             certdir[str(n+1)] = (cert, os.path.splitext(cert)[0] + ".key")
