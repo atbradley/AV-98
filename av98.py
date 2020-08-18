@@ -416,7 +416,10 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         # Redirects
         elif status.startswith("3"):
             new_gi = GeminiItem(gi.absolutise_url(meta))
-            if new_gi.url in self.previous_redirectors:
+            if new_gi.url == gi.url:
+                print("Error: URL redirects to itself!")
+                return
+            elif new_gi.url in self.previous_redirectors:
                 print("Error: caught in redirect loop!")
                 return
             elif len(self.previous_redirectors) == _MAX_REDIRECTS:
