@@ -460,20 +460,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
                 print("These are not supported in restricted mode, sorry.")
                 return
 
-            # Transient certs are a special case
-            if status == "61":
-                print("The server is asking to start a transient client certificate session.")
-                print("What do you want to do?")
-                print("1. Start a transient session.")
-                print("2. Refuse.")
-                choice = input("> ").strip()
-                if choice.strip() == "1":
-                    self._generate_transient_cert_cert()
-                    self._go_to_gi(gi, update_hist, handle)
-                    return
-                else:
-                    return
-
+            print("SERVER SAYS: ", meta)
             # Present different messages for different 6x statuses, but
             # handle them the same.
             if status in ("64", "65"):
@@ -484,24 +471,31 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             else:
                 print("The site {} is requesting a client certificate.".format(gi.host))
                 print("This will allow the site to recognise you across requests.")
+
+            # Give the user choices
             print("What do you want to do?")
             print("1. Give up.")
-            print("2. Generate new certificate and retry the request.")
-            print("3. Load previously generated certificate from file.")
-            print("4. Load certificate from file and retry the request.")
+            print("2. Generate a new transient certificate.")
+            print("3. Generate a new persistent certificate.")
+            print("4. Load a previously generated persistent.")
+            print("5. Load certificate from an external file.")
             choice = input("> ").strip()
             if choice == "2":
-                self._generate_persistent_client_cert()
+                self._generate_transient_cert_cert()
                 self._go_to_gi(gi, update_hist, handle)
             elif choice == "3":
-                self._choose_client_cert()
+                self._generate_persistent_client_cert()
                 self._go_to_gi(gi, update_hist, handle)
             elif choice == "4":
+                self._choose_client_cert()
+                self._go_to_gi(gi, update_hist, handle)
+            elif choice == "5":
                 self._load_client_cert()
                 self._go_to_gi(gi, update_hist, handle)
             else:
                 print("Giving up.")
             return
+
         # Invalid status
         elif not status.startswith("2"):
             print("ERROR: Server returned undefined status code %s!" % status)
