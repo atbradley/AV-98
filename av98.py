@@ -867,7 +867,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         self.index_index = -1
 
         if display:
-            cmd_str = _MIME_HANDLERS["text/gemini"]
+            cmd_str = self._get_handler_cmd("text/gemini")
             subprocess.call(shlex.split(cmd_str % self.idx_filename))
 
     def _format_geminiitem(self, index, gi, url=False):
