@@ -558,7 +558,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         # Pass file to handler, unless we were asked not to
         if handle:
             if mime == "text/gemini":
-                self._handle_index(body, gi)
+                self._handle_gemtext(body, gi)
             else:
                 cmd_str = self._get_handler_cmd(mime)
                 try:
@@ -819,7 +819,7 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         self._debug("Using handler: %s" % cmd_str)
         return cmd_str
 
-    def _handle_index(self, body, menu_gi, display=True):
+    def _handle_gemtext(self, body, menu_gi, display=True):
         self.index = []
         preformatted = False
         if self.idx_filename:
@@ -1441,7 +1441,7 @@ Bookmarks are stored using the 'add' command."""
         with open(bm_file, "r") as fp:
             body = fp.read()
             gi = GeminiItem("localhost/" + bm_file)
-            self._handle_index(body, gi, display = not args)
+            self._handle_gemtext(body, gi, display = not args)
             if args:
                 # Use argument as a numeric index
                 self.default(line)
