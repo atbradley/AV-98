@@ -912,12 +912,12 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         format.
         """
         print("Loading client certificate file, in PEM format (blank line to cancel)")
-        print("Do not use `~` to represent your home directory.")
         certfile = input("Certfile path: ").strip()
         if not certfile:
             print("Aborting.")
             return
-        elif not os.path.isfile(certfile):
+        certfile = os.path.expanduser(certfile)
+        if not os.path.isfile(certfile):
             print("Certificate file {} does not exist.".format(certfile))
             return
         print("Loading private key file, in PEM format (blank line to cancel)")
@@ -925,7 +925,8 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         if not keyfile:
             print("Aborting.")
             return
-        elif not os.path.isfile(keyfile):
+        keyfile = os.path.expanduser(keyfile)
+        if not os.path.isfile(keyfile):
             print("Private key file {} does not exist.".format(keyfile))
             return
         self._activate_client_cert(certfile, keyfile)
