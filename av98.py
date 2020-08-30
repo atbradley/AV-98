@@ -864,7 +864,8 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
             subprocess.call(shlex.split(cmd_str % self.idx_filename))
 
     def _format_geminiitem(self, index, gi, url=False):
-        line = "[%d] %s" % (index, gi.name or gi.url)
+        protocol = "" if gi.scheme == "gemini" else " %s" % gi.scheme
+        line = "[%d%s] %s" % (index, protocol, gi.name or gi.url)
         if gi.name and url:
             line += " (%s)" % gi.url
         return line
