@@ -54,6 +54,8 @@ except ModuleNotFoundError:
 _VERSION = "1.0.2dev"
 
 _MAX_REDIRECTS = 5
+_MAX_CACHE_SIZE = 10
+_MAX_CACHE_AGE_SECS = 180
 
 # Command abbreviations
 _ABBREVS = {
@@ -672,7 +674,7 @@ you'll be able to transparently follow links to Gopherspace!""")
             return False
         now = time.time()
         cached = self.cache_timestamps[url]
-        if now - cached > 180:
+        if now - cached > _MAX_CACHE_AGE_SECS:
             self._debug("Expiring old cached copy of resource.")
             self._remove_from_cache(url)
             return False
@@ -689,7 +691,7 @@ you'll be able to transparently follow links to Gopherspace!""")
 
         self.cache_timestamps[url] = time.time()
         self.cache[url] = (mime, filename)
-        if len(self.cache) > 10:
+        if len(self.cache) > _MAX_CACHE_SIZE:
             self._trim_cache()
         self._validate_cache()
 
@@ -704,7 +706,7 @@ you'll be able to transparently follow links to Gopherspace!""")
         # Drop other entries if they are older than the limit
         now = time.time()
         for cached, url in lru[1:]:
-            if now - cached > 180:
+            if now - cached > _MAX_CACHE_AGE_SECS:
                 self._debug("Dropping cached copy of {} from full cache.".format(url))
                 self._remove_from_cache(url)
             else:
