@@ -504,16 +504,6 @@ Slow internet connection?  Use 'set timeout' to be more patient.""")
         # If we're here, this must be a success and there's a response body
         assert status.startswith("2")
 
-        # Can we terminate a transient client session?
-        if status == "21":
-            # Make sure we're actually in such a session
-            if self.active_is_transient:
-                self._deactivate_client_cert()
-                print("INFO: Server terminated transient client certificate session.")
-            else:
-                # Huh, that's weird
-                self._debug("Server issues a 21 but we're not in transient session?")
-
         mime = meta
         if mime == "":
             mime = "text/gemini; charset=utf-8"
