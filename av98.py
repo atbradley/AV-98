@@ -361,7 +361,7 @@ you'll be able to transparently follow links to Gopherspace!""")
             else:
                 cmd_str = self._get_handler_cmd(mime)
                 try:
-                    subprocess.call(shlex.split(cmd_str % tmpf.name))
+                    subprocess.call(shlex.split(cmd_str % tmpfile))
                 except FileNotFoundError:
                     print("Handler program %s not found!" % shlex.split(cmd_str)[0])
                     print("You can use the ! command to specify another handler program or pipeline.")
