@@ -190,6 +190,9 @@ CRLF = '\r\n'
 def looks_like_url(word):
     return "." in word and word.startswith("gemini://")
 
+class UserAbortException(Exception):
+    pass
+
 # GeminiClient Decorators
 def needs_gi(inner):
     def outer(self, *args, **kwargs):
@@ -335,6 +338,8 @@ you'll be able to transparently follow links to Gopherspace!""")
         else:
             try:
                 gi, mime, body, tmpfile = self._fetch_over_network(gi)
+            except UserAbortException:
+                return
             except Exception as err:
                 # Print an error message
                 if isinstance(err, socket.gaierror):
@@ -385,7 +390,7 @@ you'll be able to transparently follow links to Gopherspace!""")
                     self._deactivate_client_cert()
                 else:
                     print("Staying here.")
-
+                    raise UserAbortException()
             else:
                 print("PRIVACY ALERT: Deactivate client cert before connecting to a new domain?")
                 resp = input("Y/N? ")
@@ -462,7 +467,7 @@ you'll be able to transparently follow links to Gopherspace!""")
             else:
                 follow = "yes"
             if follow.strip().lower() not in ("y", "yes"):
-                return
+                raise UserAbortException()
             self._debug("Following redirect to %s." % new_gi.url)
             self._debug("This is consecutive redirect number %d." % len(self.previous_redirectors))
             self.previous_redirectors.add(gi.url)
@@ -477,49 +482,8 @@ you'll be able to transparently follow links to Gopherspace!""")
 
         # Client cert
         elif status.startswith("6"):
-            # Don't do client cert stuff in restricted mode, as in principle
-            # it could be used to fill up the disk by creating a whole lot of
-            # certificates
-            if self.restricted:
-                print("The server is requesting a client certificate.")
-                print("These are not supported in restricted mode, sorry.")
-                return
-
-            print("SERVER SAYS: ", meta)
-            # Present different messages for different 6x statuses, but
-            # handle them the same.
-            if status in ("64", "65"):
-                print("The server rejected your certificate because it is either expired or not yet valid.")
-            elif status == "63":
-                print("The server did not accept your certificate.")
-                print("You may need to e.g. coordinate with the admin to get your certificate fingerprint whitelisted.")
-            else:
-                print("The site {} is requesting a client certificate.".format(gi.host))
-                print("This will allow the site to recognise you across requests.")
-
-            # Give the user choices
-            print("What do you want to do?")
-            print("1. Give up.")
-            print("2. Generate a new transient certificate.")
-            print("3. Generate a new persistent certificate.")
-            print("4. Load a previously generated persistent.")
-            print("5. Load certificate from an external file.")
-            choice = input("> ").strip()
-            if choice == "2":
-                self._generate_transient_cert_cert()
-                self._go_to_gi(gi, update_hist, handle)
-            elif choice == "3":
-                self._generate_persistent_client_cert()
-                self._go_to_gi(gi, update_hist, handle)
-            elif choice == "4":
-                self._choose_client_cert()
-                self._go_to_gi(gi, update_hist, handle)
-            elif choice == "5":
-                self._load_client_cert()
-                self._go_to_gi(gi, update_hist, handle)
-            else:
-                print("Giving up.")
-            return
+            self._handle_cert_request(meta)
+            return self._fetch_over_network(gi)
 
         # Invalid status
         elif not status.startswith("2"):
@@ -731,6 +695,48 @@ you'll be able to transparently follow links to Gopherspace!""")
         assert self.cache.keys() == self.cache_timestamps.keys()
         for _, filename in self.cache.values():
             assert os.path.isfile(filename)
+
+    def _handle_cert_request(self, meta):
+
+        # Don't do client cert stuff in restricted mode, as in principle
+        # it could be used to fill up the disk by creating a whole lot of
+        # certificates
+        if self.restricted:
+            print("The server is requesting a client certificate.")
+            print("These are not supported in restricted mode, sorry.")
+            raise UserAbortException()
+
+        print("SERVER SAYS: ", meta)
+        # Present different messages for different 6x statuses, but
+        # handle them the same.
+        if status in ("64", "65"):
+            print("The server rejected your certificate because it is either expired or not yet valid.")
+        elif status == "63":
+            print("The server did not accept your certificate.")
+            print("You may need to e.g. coordinate with the admin to get your certificate fingerprint whitelisted.")
+        else:
+            print("The site {} is requesting a client certificate.".format(gi.host))
+            print("This will allow the site to recognise you across requests.")
+
+        # Give the user choices
+        print("What do you want to do?")
+        print("1. Give up.")
+        print("2. Generate a new transient certificate.")
+        print("3. Generate a new persistent certificate.")
+        print("4. Load a previously generated persistent.")
+        print("5. Load certificate from an external file.")
+        choice = input("> ").strip()
+        if choice == "2":
+            self._generate_transient_cert_cert()
+        elif choice == "3":
+            self._generate_persistent_client_cert()
+        elif choice == "4":
+            self._choose_client_cert()
+        elif choice == "5":
+            self._load_client_cert()
+        else:
+            print("Giving up.")
+            raise UserAbortException()
 
     def _validate_cert(self, address, host, cert):
         """
