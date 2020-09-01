@@ -288,6 +288,7 @@ class GeminiClient(cmd.Cmd):
             "refused_connections": 0,
             "reset_connections": 0,
             "timeouts": 0,
+            "cache_hits": 0,
         }
 
         self._connect_to_tofu_db()
@@ -679,6 +680,7 @@ you'll be able to transparently follow links to Gopherspace!""")
 
     def _get_cached(self, url):
         mime, filename = self.cache[url]
+        self.log["cache_hits"] += 1
         if mime.startswith("text/gemini"):
             with open(filename, "r") as fp:
                 body = fp.read()
@@ -1547,6 +1549,7 @@ current gemini browsing session."""
         lines.append(("Timeouts:", self.log["timeouts"]))
         lines.append(("Refused connections:", self.log["refused_connections"]))
         lines.append(("Reset connections:", self.log["reset_connections"]))
+        lines.append(("Cache hits:", self.log["cache_hits"]))
         # Print
         for key, value in lines:
             print(key.ljust(24) + str(value).rjust(8))
