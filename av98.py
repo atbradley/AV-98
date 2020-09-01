@@ -307,7 +307,7 @@ class GeminiClient(cmd.Cmd):
             (hostname text, address text, fingerprint text,
             first_seen date, last_seen date, count integer)""")
 
-    def _go_to_gi(self, gi, update_hist=True, handle=True):
+    def _go_to_gi(self, gi, update_hist=True, check_cache=True, handle=True):
         """This method might be considered "the heart of AV-98".
         Everything involved in fetching a gemini resource happens here:
         sending the request over the network, parsing the response if
@@ -335,7 +335,7 @@ you'll be able to transparently follow links to Gopherspace!""")
             return
 
         # Use cache, or hit the network if resource is not cached
-        if self.options["cache"] and self._is_cached(gi.url):
+        if check_cache and self.options["cache"] and self._is_cached(gi.url):
             mime, body, tmpfile = self._get_cached(gi.url)
         else:
             try:
@@ -1235,7 +1235,7 @@ you'll be able to transparently follow links to Gopherspace!""")
     @needs_gi
     def do_reload(self, *args):
         """Reload the current URL."""
-        self._go_to_gi(self.gi)
+        self._go_to_gi(self.gi, check_cache=False)
 
     @needs_gi
     def do_up(self, *args):
