@@ -274,6 +274,7 @@ class GeminiClient(cmd.Cmd):
             "auto_follow_redirects" : True,
             "gopher_proxy" : None,
             "tls_mode" : "tofu",
+            "cache" : False
         }
 
         self.log = {
@@ -334,7 +335,7 @@ you'll be able to transparently follow links to Gopherspace!""")
             return
 
         # Use cache, or hit the network if resource is not cached
-        if self._is_cached(gi.url):
+        if self.options["cache"] and self._is_cached(gi.url):
             mime, body, tmpfile = self._get_cached(gi.url)
         else:
             try:
@@ -526,7 +527,8 @@ you'll be able to transparently follow links to Gopherspace!""")
         self._debug("Wrote %d byte response to %s." % (size, self.tmp_filename))
 
         # Maintain cache and log
-        self._add_to_cache(gi.url, mime, tmpf.name)
+        if self.options["cache"]:
+            self._add_to_cache(gi.url, mime, tmpf.name)
         self._log_visit(gi, address, size)
 
         return gi, mime, body, tmpf
