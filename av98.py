@@ -528,10 +528,10 @@ you'll be able to transparently follow links to Gopherspace!""")
 
         # Maintain cache and log
         if self.options["cache"]:
-            self._add_to_cache(gi.url, mime, tmpf.name)
+            self._add_to_cache(gi.url, mime, self.tmp_filename)
         self._log_visit(gi, address, size)
 
-        return gi, mime, body, tmpf
+        return gi, mime, body, self.tmp_filename
 
     def _send_request(self, gi):
         """Send a selector to a given host and port.
