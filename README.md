@@ -44,3 +44,19 @@ If a Gemini document is too long to fit on your screen, use the `less` command
 to pipe it to the `less` pager.
 
 Use the `help` command to learn about additional commands.
+
+## RC files
+
+You can use an RC file to automatically run any sequence of valid AV-98
+commands upon start up.  This can be used to make settings controlled with the
+`set` or `handler` commanders persistent.  You can also put a `go` command in
+your RC file to visit a "homepage" automatically on startup, or to pre-prepare
+a `tour` of your favourite Gemini sites.
+
+The RC file should be called `av98rc`.  AV-98 will look for it first in
+`~/.av98/` and second in `~/.config/av98/`.  Note that either directory might
+already exist even if you haven't created it manually, as AV-98 will, if
+necessary, create the directory itself the first time you save a bookmark (the
+bookmark file is saved in the same location).  AV-98 will create
+`~/.config/av98` only if `~/.config/` already exists on your system, otherwise
+it will create `~/.av98/`.
